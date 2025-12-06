@@ -1,8 +1,15 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openai: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openai;
+}
 
 export interface AnalysisResult {
   summary: string;
@@ -49,7 +56,8 @@ Przeanalizuj ten etap procesu legislacyjnego i odpowiedz w formacie JSON:
 Odpowiedz TYLKO w formacie JSON, bez dodatkowego tekstu.`;
 
   try {
-    const response = await openai.chat.completions.create({
+    const client = getOpenAIClient();
+    const response = await client.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
@@ -109,7 +117,8 @@ Przeanalizuj ten dokument i odpowiedz w formacie JSON:
 Odpowiedz TYLKO w formacie JSON, bez dodatkowego tekstu.`;
 
   try {
-    const response = await openai.chat.completions.create({
+    const client = getOpenAIClient();
+    const response = await client.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {

@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import { prisma, FileType } from '@repo/database';
-import { asyncHandler } from '../middleware/asyncHandler.js';
-import { sendSuccess } from '../middleware/response.js';
-import { AppError } from '../middleware/errorHandler.js';
+import { asyncHandler } from '../middleware/asyncHandler';
+import { sendSuccess } from '../middleware/response';
+import { AppError } from '../middleware/errorHandler';
 import fs from 'fs/promises';
 import path from 'path';
 

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '@repo/database';
-import { asyncHandler } from '../middleware/asyncHandler.js';
-import { sendSuccess } from '../middleware/response.js';
+import { asyncHandler } from '../middleware/asyncHandler';
+import { sendSuccess } from '../middleware/response';
 
 export const getStats = asyncHandler(async (req: Request, res: Response) => {
   const [totalLaws, totalPhases, totalStages, totalDiscussions, lawsByPhaseRaw] =

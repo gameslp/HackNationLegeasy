@@ -5,8 +5,8 @@ import {
   createPhase,
   updatePhase,
   deletePhase,
-} from '../controllers/phasesController.js';
-import { validate } from '../middleware/validate.js';
+} from '../controllers/phasesController';
+import { validate } from '../middleware/validate';
 import { CreatePhaseRequestSchema, UpdatePhaseRequestSchema } from '@repo/validation';
 
 const router = Router({ mergeParams: true });

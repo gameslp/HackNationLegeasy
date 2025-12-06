@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { prisma } from '@repo/database';
 import type { Prisma } from '@repo/database';
-import { asyncHandler } from '../middleware/asyncHandler.js';
-import { sendSuccess } from '../middleware/response.js';
-import { AppError } from '../middleware/errorHandler.js';
+import { asyncHandler } from '../middleware/asyncHandler';
+import { sendSuccess } from '../middleware/response';
+import { AppError } from '../middleware/errorHandler';
 import type { CreatePhaseRequest, UpdatePhaseRequest } from '@repo/validation';
 
 export const getPhases = asyncHandler(async (req: Request, res: Response) => {

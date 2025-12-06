@@ -6,11 +6,11 @@ import {
   updateStage,
   deleteStage,
   analyzeStageHandler,
-} from '../controllers/stagesController.js';
-import { getDiscussions, createDiscussion } from '../controllers/discussionsController.js';
-import { uploadFile, downloadFile, deleteFile } from '../controllers/filesController.js';
-import { validate } from '../middleware/validate.js';
-import { upload } from '../middleware/upload.js';
+} from '../controllers/stagesController';
+import { getDiscussions, createDiscussion } from '../controllers/discussionsController';
+import { uploadFile, downloadFile, deleteFile } from '../controllers/filesController';
+import { validate } from '../middleware/validate';
+import { upload } from '../middleware/upload';
 import {
   CreateStageRequestSchema,
   UpdateStageRequestSchema,

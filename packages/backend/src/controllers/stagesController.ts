@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
 import { prisma } from '@repo/database';
 import type { Prisma } from '@repo/database';
-import { asyncHandler } from '../middleware/asyncHandler.js';
-import { sendSuccess } from '../middleware/response.js';
-import { AppError } from '../middleware/errorHandler.js';
-import { computeDiff } from '../services/diffService.js';
-import { analyzeStage, analyzeFile } from '../services/aiService.js';
+import { asyncHandler } from '../middleware/asyncHandler';
+import { sendSuccess } from '../middleware/response';
+import { AppError } from '../middleware/errorHandler';
+import { computeDiff } from '../services/diffService';
+import { analyzeStage, analyzeFile } from '../services/aiService';
 import type { CreateStageRequest, UpdateStageRequest, DiffQuery, AnalyzeRequest } from '@repo/validation';
 import fs from 'fs/promises';
 import path from 'path';

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '@repo/database';
-import { asyncHandler } from '../middleware/asyncHandler.js';
-import { sendSuccess } from '../middleware/response.js';
+import { asyncHandler } from '../middleware/asyncHandler';
+import { sendSuccess } from '../middleware/response';
 import type { CreateDiscussionRequest } from '@repo/validation';
 
 export const getDiscussions = asyncHandler(async (req: Request, res: Response) => {

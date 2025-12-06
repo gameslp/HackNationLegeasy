@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import lawsRouter from './laws.js';
-import phasesRouter from './phases.js';
-import stagesRouter from './stages.js';
-import adminRouter from './admin.js';
+import lawsRouter from './laws';
+import phasesRouter from './phases';
+import stagesRouter from './stages';
+import adminRouter from './admin';
 
 const router = Router();
 

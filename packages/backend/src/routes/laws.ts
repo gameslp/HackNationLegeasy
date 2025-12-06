@@ -6,9 +6,9 @@ import {
   updateLaw,
   deleteLaw,
   getAllStagesForLaw,
-} from '../controllers/lawsController.js';
-import { getDiff } from '../controllers/stagesController.js';
-import { validate } from '../middleware/validate.js';
+} from '../controllers/lawsController';
+import { getDiff } from '../controllers/stagesController';
+import { validate } from '../middleware/validate';
 import {
   CreateLawRequestSchema,
   UpdateLawRequestSchema,
