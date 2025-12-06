@@ -98,6 +98,11 @@ export default function AdminStagePage({
     });
   };
 
+  const handleScanFiles = (link: string) => {
+    // Placeholder for scanning documents functionality
+    alert(`Skanowanie dokumentów z linku: ${link}`);
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -242,6 +247,15 @@ export default function AdminStagePage({
                       >
                         {link}
                       </a>
+                      <div className='flex flex-center'>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className='text-primary-600'
+                        onClick={() => handleScanFiles(link)}
+                      >
+                        Skanuj dokumenty
+                      </Button>
                       <button
                         type="button"
                         onClick={() => handleRemoveLink(link)}
@@ -249,6 +263,7 @@ export default function AdminStagePage({
                       >
                         <X className="w-4 h-4" />
                       </button>
+                      </div>
                     </div>
                   ))}
                 </div>

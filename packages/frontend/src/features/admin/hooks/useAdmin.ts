@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
-import type { AdminStats } from '@/lib/api/types';
+import type { AdminStats, PhaseListItem, StageListItem } from '@/lib/api/types';
 
 export function useAdminStats() {
   return useQuery({
@@ -21,13 +21,19 @@ export function useRecentStage() {
 export function useAllPhases() {
   return useQuery({
     queryKey: ['allPhases'],
-    queryFn: () => apiClient.get('/admin/all-phases'),
+    queryFn: () =>
+      apiClient.get<{ phases: PhaseListItem[]; total: number }>(
+        '/admin/all-phases'
+      ),
   });
 }
 
 export function useAllStages() {
   return useQuery({
     queryKey: ['allStages'],
-    queryFn: () => apiClient.get('/admin/all-stages'),
+    queryFn: () =>
+      apiClient.get<{ stages: StageListItem[]; total: number }>(
+        '/admin/all-stages'
+      ),
   });
 }

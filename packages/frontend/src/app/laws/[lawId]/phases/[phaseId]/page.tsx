@@ -85,6 +85,7 @@ export default function PhasePage({
             {phase.stages.map((stage, index) => (
               <div
                 key={stage.id}
+                id={`stage-${stage.id}`}
                 className="animate-fadeIn"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
