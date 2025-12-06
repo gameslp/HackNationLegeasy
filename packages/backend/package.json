@@ -1,0 +1,29 @@
+{
+  "name": "@repo/backend",
+  "version": "1.0.0",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@repo/database": "workspace:*",
+    "@repo/validation": "workspace:*",
+    "express": "^4.21.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "multer": "^1.4.5-lts.1",
+    "diff": "^7.0.0",
+    "openai": "^4.70.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/express": "^5.0.0",
+    "@types/cors": "^2.8.17",
+    "@types/multer": "^1.4.12",
+    "@types/diff": "^6.0.0",
+    "typescript": "^5.6.0",
+    "ts-node-dev": "^2.0.0"
+  }
+}

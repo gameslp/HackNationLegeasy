@@ -1,0 +1,136 @@
+{
+  "screens": [
+    {
+      "id": "laws_list",
+      "title": "Lista Ustaw",
+      "route": "/",
+      "description": "Główny widok z listą wszystkich ustaw, wyszukiwanie po nazwie/autorze, filtrowanie po fazie",
+      "requiredData": ["laws", "lawsCount"],
+      "actions": ["search", "filterByPhase", "goToLaw"],
+      "usedByFlows": ["browse_law", "compare_versions"]
+    },
+    {
+      "id": "law_phases",
+      "title": "Fazy Ustawy",
+      "route": "/laws/:lawId",
+      "description": "Timeline faz ustawy z podstawowymi informacjami o ustawie. Wizualizacja postępu procesu legislacyjnego.",
+      "requiredData": ["law", "phases"],
+      "actions": ["goToPhase", "compareVersions"],
+      "usedByFlows": ["browse_law", "compare_versions"]
+    },
+    {
+      "id": "phase_stages",
+      "title": "Etapy Fazy",
+      "route": "/laws/:lawId/phases/:phaseId",
+      "description": "Lista etapów w danej fazie z krótkim podglądem każdego etapu",
+      "requiredData": ["law", "phase", "stages"],
+      "actions": ["goToStage", "compareVersions"],
+      "usedByFlows": ["browse_law"]
+    },
+    {
+      "id": "stage_detail",
+      "title": "Szczegóły Etapu",
+      "route": "/laws/:lawId/phases/:phaseId/stages/:stageId",
+      "description": "Pełne dane etapu: opis, autor, data, linki rządowe, lista plików do pobrania, treść ustawy (jeśli TXT), sekcja dyskusji",
+      "requiredData": ["law", "phase", "stage", "stageFiles", "discussions"],
+      "actions": ["downloadFile", "viewLawText", "analyzeAI", "addComment", "compareWithOther"],
+      "usedByFlows": ["browse_law", "ai_analyze", "add_discussion"]
+    },
+    {
+      "id": "diff_view",
+      "title": "Porównanie Wersji",
+      "route": "/laws/:lawId/diff",
+      "description": "Widok diff między dwoma wybranymi etapami. Selektory do wyboru etapu źródłowego i docelowego. Unified diff lub side-by-side.",
+      "requiredData": ["law", "allStages", "sourceStage", "targetStage", "diffResult"],
+      "actions": ["selectSourceStage", "selectTargetStage", "toggleDiffMode"],
+      "usedByFlows": ["compare_versions"]
+    },
+    {
+      "id": "ai_analysis",
+      "title": "Analiza AI",
+      "route": "/laws/:lawId/phases/:phaseId/stages/:stageId/analysis",
+      "description": "Wynik analizy AI dla etapu lub konkretnego pliku. Podsumowanie zmian, możliwe efekty prawne, uproszczone wyjaśnienie.",
+      "requiredData": ["stage", "analysisResult"],
+      "actions": ["regenerateAnalysis", "selectFileToAnalyze"],
+      "usedByFlows": ["ai_analyze"]
+    },
+    {
+      "id": "admin_dashboard",
+      "title": "Panel Admin - Dashboard",
+      "route": "/admin",
+      "description": "Lista wszystkich ustaw z opcjami edycji, usunięcia, dodania nowej. Statystyki (liczba ustaw, faz, etapów).",
+      "requiredData": ["laws", "stats"],
+      "actions": ["createLaw", "editLaw", "deleteLaw", "goToLawManagement"],
+      "usedByFlows": ["admin_create_law"]
+    },
+    {
+      "id": "admin_law_edit",
+      "title": "Panel Admin - Edycja Ustawy",
+      "route": "/admin/laws/:lawId?",
+      "description": "Formularz tworzenia/edycji ustawy. Pola: nazwa, autor, opis, data rozpoczęcia, data publikacji. Lista faz pod formularzem.",
+      "requiredData": ["law?", "phases?"],
+      "actions": ["saveLaw", "deleteLaw", "addPhase", "editPhase", "deletePhase"],
+      "usedByFlows": ["admin_create_law"]
+    },
+    {
+      "id": "admin_phase_edit",
+      "title": "Panel Admin - Edycja Fazy",
+      "route": "/admin/laws/:lawId/phases/:phaseId?",
+      "description": "Formularz dodawania/edycji fazy. Pola: typ fazy (dropdown), data rozpoczęcia, data zakończenia. Lista etapów pod formularzem.",
+      "requiredData": ["law", "phase?", "stages?"],
+      "actions": ["savePhase", "deletePhase", "addStage", "editStage", "deleteStage"],
+      "usedByFlows": ["admin_create_law", "admin_add_stage"]
+    },
+    {
+      "id": "admin_stage_edit",
+      "title": "Panel Admin - Edycja Etapu",
+      "route": "/admin/laws/:lawId/phases/:phaseId/stages/:stageId?",
+      "description": "Formularz dodawania/edycji etapu. Pola: nazwa, data, autor, opis, linki rządowe (dynamic list), upload plików (drag&drop), treść TXT (textarea lub auto-extract z PDF).",
+      "requiredData": ["law", "phase", "stage?", "stageFiles?"],
+      "actions": ["saveStage", "deleteStage", "uploadFile", "deleteFile", "extractTextFromPdf"],
+      "usedByFlows": ["admin_add_stage"]
+    }
+  ],
+  "components": [
+    {
+      "id": "LawCard",
+      "description": "Karta ustawy na liście - nazwa, autor, data, aktualny status (ostatnia faza)",
+      "usedIn": ["laws_list", "admin_dashboard"]
+    },
+    {
+      "id": "PhaseTimeline",
+      "description": "Wizualizacja timeline'u faz ustawy z ikonami dla każdego typu fazy",
+      "usedIn": ["law_phases"]
+    },
+    {
+      "id": "StageCard",
+      "description": "Karta etapu z podstawowymi danymi i liczbą plików",
+      "usedIn": ["phase_stages"]
+    },
+    {
+      "id": "FileList",
+      "description": "Lista plików z ikonami typów i przyciskami pobierania",
+      "usedIn": ["stage_detail", "admin_stage_edit"]
+    },
+    {
+      "id": "DiscussionSection",
+      "description": "Sekcja dyskusji z listą komentarzy i formularzem dodawania",
+      "usedIn": ["stage_detail"]
+    },
+    {
+      "id": "DiffViewer",
+      "description": "Komponent wyświetlający diff tekstowy (unified/side-by-side)",
+      "usedIn": ["diff_view"]
+    },
+    {
+      "id": "AIAnalysisResult",
+      "description": "Wyświetlanie wyniku analizy AI z sekcjami: podsumowanie, zmiany, efekty",
+      "usedIn": ["ai_analysis"]
+    },
+    {
+      "id": "NicknameModal",
+      "description": "Modal do ustawienia nicka przed pierwszym komentarzem (zapisywany w localStorage)",
+      "usedIn": ["stage_detail"]
+    }
+  ]
+}

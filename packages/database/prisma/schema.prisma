@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Ustawa - główny obiekt procesu legislacyjnego
+model Law {
+  id          String    @id @default(cuid())
+  name        String    @db.VarChar(500)
+  author      String    @db.VarChar(255) // Wnioskodawca
+  description String    @db.Text
+  startDate   DateTime
+  publishDate DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  phases Phase[]
+
+  @@index([name])
+  @@index([author])
+  @@index([startDate])
+}
+
+// Typ fazy procesu legislacyjnego
+enum PhaseType {
+  PRECONSULTATION // Prekonsultacje
+  RCL             // Rządowe Centrum Legislacji
+  SEJM            // Sejm
+  SENAT           // Senat
+  PRESIDENT       // Prezydent
+  JOURNAL         // Dziennik Ustaw (Wdrożone)
+}
+
+// Faza procesu legislacyjnego
+model Phase {
+  id        String    @id @default(cuid())
+  lawId     String
+  type      PhaseType
+  startDate DateTime
+  endDate   DateTime?
+  order     Int       // Kolejność fazy w procesie
+  createdAt DateTime  @default(now())
+
+  law    Law     @relation(fields: [lawId], references: [id], onDelete: Cascade)
+  stages Stage[]
+
+  @@index([lawId])
+  @@index([type])
+}
+
+// Typ pliku
+enum FileType {
+  LAW_PDF  // Główny PDF ustawy
+  LAW_TXT  // Wersja tekstowa ustawy (do diff)
+  RELATED  // Pliki powiązane
+}
+
+// Etap w ramach fazy
+model Stage {
+  id              String   @id @default(cuid())
+  phaseId         String
+  name            String   @db.VarChar(500)
+  date            DateTime
+  author          String?  @db.VarChar(255)
+  description     String?  @db.Text
+  governmentLinks Json     @default("[]") // Array of links
+  lawTextContent  String?  @db.LongText // Treść ustawy jako tekst (do diff)
+  order           Int      // Kolejność etapu w fazie
+  createdAt       DateTime @default(now())
+
+  phase       Phase        @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  files       StageFile[]
+  discussions Discussion[]
+
+  @@index([phaseId])
+  @@index([date])
+}
+
+// Plik powiązany z etapem
+model StageFile {
+  id        String   @id @default(cuid())
+  stageId   String
+  fileName  String   @db.VarChar(500)
+  filePath  String   @db.VarChar(1000)
+  fileType  FileType
+  mimeType  String   @db.VarChar(100)
+  size      Int      // Rozmiar w bajtach
+  createdAt DateTime @default(now())
+
+  stage Stage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@index([stageId])
+  @@index([fileType])
+}
+
+// Komentarz w dyskusji
+model Discussion {
+  id        String   @id @default(cuid())
+  stageId   String
+  nickname  String   @db.VarChar(100)
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  stage Stage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@index([stageId])
+  @@index([createdAt])
+}

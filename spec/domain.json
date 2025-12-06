@@ -1,0 +1,217 @@
+{
+  "goal": "System do śledzenia procesu legislacyjnego w Polsce z wersjonowaniem tekstów ustaw (git-like) i analizą AI",
+  "users": [
+    {
+      "id": "citizen",
+      "description": "Obywatel przeglądający ustawy i ich etapy (read-only), może uczestniczyć w dyskusjach pod nickiem"
+    },
+    {
+      "id": "official",
+      "description": "Urzędnik zarządzający ustawami, fazami i etapami przez panel /admin (bez logowania)"
+    }
+  ],
+  "entities": [
+    {
+      "id": "Law",
+      "description": "Ustawa - główny obiekt reprezentujący projekt ustawy",
+      "fields": [
+        { "name": "id", "type": "string (cuid)" },
+        { "name": "name", "type": "string", "description": "Nazwa ustawy" },
+        { "name": "author", "type": "string", "description": "Wnioskodawca" },
+        { "name": "description", "type": "text", "description": "Opis ustawy" },
+        { "name": "startDate", "type": "datetime", "description": "Data rozpoczęcia procesu" },
+        { "name": "publishDate", "type": "datetime?", "description": "Data publikacji (opcjonalna)" },
+        { "name": "createdAt", "type": "datetime" },
+        { "name": "updatedAt", "type": "datetime" }
+      ]
+    },
+    {
+      "id": "Phase",
+      "description": "Faza procesu legislacyjnego (Prekonsultacje, RCL, Sejm, Senat, Prezydent, Dziennik Ustaw)",
+      "fields": [
+        { "name": "id", "type": "string (cuid)" },
+        { "name": "lawId", "type": "string", "description": "ID ustawy" },
+        { "name": "type", "type": "enum PhaseType", "description": "Typ fazy" },
+        { "name": "startDate", "type": "datetime", "description": "Data rozpoczęcia fazy" },
+        { "name": "endDate", "type": "datetime?", "description": "Data zakończenia fazy" },
+        { "name": "order", "type": "int", "description": "Kolejność fazy w procesie" },
+        { "name": "createdAt", "type": "datetime" }
+      ]
+    },
+    {
+      "id": "Stage",
+      "description": "Etap w ramach fazy - zawiera wersję ustawy i powiązane pliki",
+      "fields": [
+        { "name": "id", "type": "string (cuid)" },
+        { "name": "phaseId", "type": "string", "description": "ID fazy" },
+        { "name": "name", "type": "string", "description": "Nazwa etapu" },
+        { "name": "date", "type": "datetime", "description": "Data etapu" },
+        { "name": "author", "type": "string?", "description": "Autor zmian w etapie" },
+        { "name": "description", "type": "text?", "description": "Opis etapu" },
+        { "name": "governmentLinks", "type": "json", "description": "Linki do stron rządowych (array)" },
+        { "name": "lawTextContent", "type": "longtext?", "description": "Treść ustawy jako tekst (do diff)" },
+        { "name": "order", "type": "int", "description": "Kolejność etapu w fazie" },
+        { "name": "createdAt", "type": "datetime" }
+      ]
+    },
+    {
+      "id": "StageFile",
+      "description": "Plik powiązany z etapem (PDF ustawy lub inne dokumenty)",
+      "fields": [
+        { "name": "id", "type": "string (cuid)" },
+        { "name": "stageId", "type": "string", "description": "ID etapu" },
+        { "name": "fileName", "type": "string", "description": "Nazwa pliku" },
+        { "name": "filePath", "type": "string", "description": "Ścieżka do pliku na serwerze" },
+        { "name": "fileType", "type": "enum FileType", "description": "Typ pliku (LAW_PDF, LAW_TXT, RELATED)" },
+        { "name": "mimeType", "type": "string", "description": "MIME type" },
+        { "name": "size", "type": "int", "description": "Rozmiar w bajtach" },
+        { "name": "createdAt", "type": "datetime" }
+      ]
+    },
+    {
+      "id": "Discussion",
+      "description": "Komentarz w dyskusji pod etapem",
+      "fields": [
+        { "name": "id", "type": "string (cuid)" },
+        { "name": "stageId", "type": "string", "description": "ID etapu" },
+        { "name": "nickname", "type": "string", "description": "Nick użytkownika" },
+        { "name": "content", "type": "text", "description": "Treść komentarza" },
+        { "name": "createdAt", "type": "datetime" }
+      ]
+    }
+  ],
+  "enums": [
+    {
+      "id": "PhaseType",
+      "values": ["PRECONSULTATION", "RCL", "SEJM", "SENAT", "PRESIDENT", "JOURNAL"]
+    },
+    {
+      "id": "FileType",
+      "values": ["LAW_PDF", "LAW_TXT", "RELATED"]
+    }
+  ],
+  "screens": [
+    {
+      "id": "laws_list",
+      "title": "Lista Ustaw",
+      "description": "Główny widok z listą wszystkich ustaw, wyszukiwanie i filtrowanie"
+    },
+    {
+      "id": "law_phases",
+      "title": "Fazy Ustawy",
+      "description": "Widok faz danej ustawy jako timeline"
+    },
+    {
+      "id": "phase_stages",
+      "title": "Etapy Fazy",
+      "description": "Lista etapów w fazie z podglądem danych, plików i dyskusją"
+    },
+    {
+      "id": "stage_detail",
+      "title": "Szczegóły Etapu",
+      "description": "Pełne dane etapu, pliki, treść ustawy, dyskusja"
+    },
+    {
+      "id": "diff_view",
+      "title": "Porównanie Wersji",
+      "description": "Git-like diff między dwoma etapami (wybór etapów do porównania)"
+    },
+    {
+      "id": "ai_analysis",
+      "title": "Analiza AI",
+      "description": "Wynik analizy AI dla etapu lub pliku"
+    },
+    {
+      "id": "admin_dashboard",
+      "title": "Panel Admin",
+      "description": "Dashboard dla urzędnika z listą ustaw do zarządzania"
+    },
+    {
+      "id": "admin_law_edit",
+      "title": "Edycja Ustawy",
+      "description": "Formularz tworzenia/edycji ustawy"
+    },
+    {
+      "id": "admin_phase_edit",
+      "title": "Edycja Fazy",
+      "description": "Formularz dodawania/edycji fazy do ustawy"
+    },
+    {
+      "id": "admin_stage_edit",
+      "title": "Edycja Etapu",
+      "description": "Formularz dodawania/edycji etapu z uploadem plików"
+    }
+  ],
+  "flows": [
+    {
+      "id": "browse_law",
+      "title": "Przeglądanie ustawy przez obywatela",
+      "steps": [
+        "Otwórz listę ustaw",
+        "Wybierz ustawę",
+        "Zobacz timeline faz",
+        "Wybierz fazę",
+        "Zobacz etapy",
+        "Otwórz szczegóły etapu",
+        "Przeglądaj pliki i treść"
+      ]
+    },
+    {
+      "id": "compare_versions",
+      "title": "Porównanie wersji ustawy",
+      "steps": [
+        "Otwórz ustawę",
+        "Wybierz 'Porównaj wersje'",
+        "Wybierz etap źródłowy",
+        "Wybierz etap docelowy",
+        "Zobacz diff zmian"
+      ]
+    },
+    {
+      "id": "ai_analyze",
+      "title": "Analiza AI etapu",
+      "steps": [
+        "Otwórz szczegóły etapu",
+        "Kliknij 'Analizuj AI'",
+        "Wybierz zakres (etap/plik)",
+        "Poczekaj na wynik",
+        "Zobacz podsumowanie i efekty"
+      ]
+    },
+    {
+      "id": "add_discussion",
+      "title": "Dodanie komentarza do dyskusji",
+      "steps": [
+        "Otwórz szczegóły etapu",
+        "Przewiń do dyskusji",
+        "Wpisz nick (jeśli pierwszy raz)",
+        "Napisz komentarz",
+        "Opublikuj"
+      ]
+    },
+    {
+      "id": "admin_create_law",
+      "title": "Utworzenie nowej ustawy przez urzędnika",
+      "steps": [
+        "Otwórz panel /admin",
+        "Kliknij 'Nowa ustawa'",
+        "Wypełnij dane ustawy",
+        "Zapisz",
+        "Dodaj pierwszą fazę",
+        "Dodaj etap z plikami"
+      ]
+    },
+    {
+      "id": "admin_add_stage",
+      "title": "Dodanie nowego etapu",
+      "steps": [
+        "Otwórz ustawę w panelu admin",
+        "Wybierz fazę",
+        "Kliknij 'Dodaj etap'",
+        "Wypełnij dane etapu",
+        "Upload plików (PDF, TXT)",
+        "Zapisz"
+      ]
+    }
+  ]
+}

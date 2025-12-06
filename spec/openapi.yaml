@@ -1,0 +1,1045 @@
+openapi: 3.0.0
+info:
+  title: Legeasy API
+  description: API do śledzenia procesu legislacyjnego w Polsce
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+
+paths:
+  # ============ LAWS ============
+  /laws:
+    get:
+      summary: Get all laws
+      tags: [Laws]
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name or author
+        - name: phaseType
+          in: query
+          schema:
+            $ref: '#/components/schemas/PhaseType'
+          description: Filter by current phase type
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLawsResponse'
+
+    post:
+      summary: Create a new law
+      tags: [Laws, Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLawRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LawResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /laws/{lawId}:
+    get:
+      summary: Get law by ID with phases
+      tags: [Laws]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LawWithPhasesResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update law
+      tags: [Laws, Admin]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLawRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LawResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete law
+      tags: [Laws, Admin]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /laws/{lawId}/stages:
+    get:
+      summary: Get all stages for a law (for diff comparison)
+      tags: [Laws]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAllStagesResponse'
+
+  /laws/{lawId}/diff:
+    get:
+      summary: Compare two stages (diff)
+      tags: [Laws]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+        - name: sourceStageId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: targetStageId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiffResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============ PHASES ============
+  /laws/{lawId}/phases:
+    get:
+      summary: Get phases for a law
+      tags: [Phases]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPhasesResponse'
+
+    post:
+      summary: Create a phase for a law
+      tags: [Phases, Admin]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePhaseRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhaseResponse'
+
+  /laws/{lawId}/phases/{phaseId}:
+    get:
+      summary: Get phase with stages
+      tags: [Phases]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+        - $ref: '#/components/parameters/PhaseId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhaseWithStagesResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update phase
+      tags: [Phases, Admin]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+        - $ref: '#/components/parameters/PhaseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePhaseRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhaseResponse'
+
+    delete:
+      summary: Delete phase
+      tags: [Phases, Admin]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+        - $ref: '#/components/parameters/PhaseId'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+
+  # ============ STAGES ============
+  /laws/{lawId}/phases/{phaseId}/stages:
+    get:
+      summary: Get stages for a phase
+      tags: [Stages]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+        - $ref: '#/components/parameters/PhaseId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetStagesResponse'
+
+    post:
+      summary: Create a stage
+      tags: [Stages, Admin]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+        - $ref: '#/components/parameters/PhaseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStageRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StageResponse'
+
+  /laws/{lawId}/phases/{phaseId}/stages/{stageId}:
+    get:
+      summary: Get stage with files and discussions
+      tags: [Stages]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+        - $ref: '#/components/parameters/PhaseId'
+        - $ref: '#/components/parameters/StageId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StageDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update stage
+      tags: [Stages, Admin]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+        - $ref: '#/components/parameters/PhaseId'
+        - $ref: '#/components/parameters/StageId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStageRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StageResponse'
+
+    delete:
+      summary: Delete stage
+      tags: [Stages, Admin]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+        - $ref: '#/components/parameters/PhaseId'
+        - $ref: '#/components/parameters/StageId'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+
+  # ============ FILES ============
+  /laws/{lawId}/phases/{phaseId}/stages/{stageId}/files:
+    post:
+      summary: Upload file to stage
+      tags: [Files, Admin]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+        - $ref: '#/components/parameters/PhaseId'
+        - $ref: '#/components/parameters/StageId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                fileType:
+                  $ref: '#/components/schemas/FileType'
+              required:
+                - file
+                - fileType
+      responses:
+        '201':
+          description: Uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StageFileResponse'
+
+  /laws/{lawId}/phases/{phaseId}/stages/{stageId}/files/{fileId}:
+    get:
+      summary: Download file
+      tags: [Files]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+        - $ref: '#/components/parameters/PhaseId'
+        - $ref: '#/components/parameters/StageId'
+        - $ref: '#/components/parameters/FileId'
+      responses:
+        '200':
+          description: File content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete file
+      tags: [Files, Admin]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+        - $ref: '#/components/parameters/PhaseId'
+        - $ref: '#/components/parameters/StageId'
+        - $ref: '#/components/parameters/FileId'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+
+  # ============ DISCUSSIONS ============
+  /laws/{lawId}/phases/{phaseId}/stages/{stageId}/discussions:
+    get:
+      summary: Get discussions for a stage
+      tags: [Discussions]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+        - $ref: '#/components/parameters/PhaseId'
+        - $ref: '#/components/parameters/StageId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDiscussionsResponse'
+
+    post:
+      summary: Add comment to discussion
+      tags: [Discussions]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+        - $ref: '#/components/parameters/PhaseId'
+        - $ref: '#/components/parameters/StageId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDiscussionRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiscussionResponse'
+
+  # ============ AI ANALYSIS ============
+  /laws/{lawId}/phases/{phaseId}/stages/{stageId}/analyze:
+    post:
+      summary: Analyze stage with AI
+      tags: [AI]
+      parameters:
+        - $ref: '#/components/parameters/LawId'
+        - $ref: '#/components/parameters/PhaseId'
+        - $ref: '#/components/parameters/StageId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyzeRequest'
+      responses:
+        '200':
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyzeResponse'
+
+  # ============ ADMIN STATS ============
+  /admin/stats:
+    get:
+      summary: Get admin dashboard statistics
+      tags: [Admin]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStatsResponse'
+
+components:
+  parameters:
+    LawId:
+      name: lawId
+      in: path
+      required: true
+      schema:
+        type: string
+    PhaseId:
+      name: phaseId
+      in: path
+      required: true
+      schema:
+        type: string
+    StageId:
+      name: stageId
+      in: path
+      required: true
+      schema:
+        type: string
+    FileId:
+      name: fileId
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # ============ ENUMS ============
+    PhaseType:
+      type: string
+      enum: [PRECONSULTATION, RCL, SEJM, SENAT, PRESIDENT, JOURNAL]
+
+    FileType:
+      type: string
+      enum: [LAW_PDF, LAW_TXT, RELATED]
+
+    # ============ BASE MODELS ============
+    Law:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        author:
+          type: string
+        description:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        publishDate:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Phase:
+      type: object
+      properties:
+        id:
+          type: string
+        lawId:
+          type: string
+        type:
+          $ref: '#/components/schemas/PhaseType'
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+        order:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    Stage:
+      type: object
+      properties:
+        id:
+          type: string
+        phaseId:
+          type: string
+        name:
+          type: string
+        date:
+          type: string
+          format: date-time
+        author:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        governmentLinks:
+          type: array
+          items:
+            type: string
+        lawTextContent:
+          type: string
+          nullable: true
+        order:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    StageFile:
+      type: object
+      properties:
+        id:
+          type: string
+        stageId:
+          type: string
+        fileName:
+          type: string
+        filePath:
+          type: string
+        fileType:
+          $ref: '#/components/schemas/FileType'
+        mimeType:
+          type: string
+        size:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    Discussion:
+      type: object
+      properties:
+        id:
+          type: string
+        stageId:
+          type: string
+        nickname:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # ============ REQUESTS ============
+    CreateLawRequest:
+      type: object
+      required: [name, author, description, startDate]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 500
+        author:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        publishDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    UpdateLawRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 500
+        author:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        publishDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreatePhaseRequest:
+      type: object
+      required: [type, startDate]
+      properties:
+        type:
+          $ref: '#/components/schemas/PhaseType'
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+        order:
+          type: integer
+
+    UpdatePhaseRequest:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/PhaseType'
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+        order:
+          type: integer
+
+    CreateStageRequest:
+      type: object
+      required: [name, date]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 500
+        date:
+          type: string
+          format: date-time
+        author:
+          type: string
+          maxLength: 255
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        governmentLinks:
+          type: array
+          items:
+            type: string
+        lawTextContent:
+          type: string
+          nullable: true
+        order:
+          type: integer
+
+    UpdateStageRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 500
+        date:
+          type: string
+          format: date-time
+        author:
+          type: string
+          maxLength: 255
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        governmentLinks:
+          type: array
+          items:
+            type: string
+        lawTextContent:
+          type: string
+          nullable: true
+        order:
+          type: integer
+
+    CreateDiscussionRequest:
+      type: object
+      required: [nickname, content]
+      properties:
+        nickname:
+          type: string
+          minLength: 1
+          maxLength: 100
+        content:
+          type: string
+          minLength: 1
+
+    AnalyzeRequest:
+      type: object
+      properties:
+        fileId:
+          type: string
+          nullable: true
+          description: Optional file ID to analyze specific file, otherwise analyzes whole stage
+
+    # ============ RESPONSES ============
+    ErrorResponse:
+      type: object
+      properties:
+        data:
+          type: null
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+            code:
+              type: string
+
+    DeleteResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            success:
+              type: boolean
+        error:
+          type: null
+
+    GetLawsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            laws:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/Law'
+                  - type: object
+                    properties:
+                      currentPhase:
+                        $ref: '#/components/schemas/PhaseType'
+            total:
+              type: integer
+            page:
+              type: integer
+            limit:
+              type: integer
+        error:
+          type: null
+
+    LawResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Law'
+        error:
+          type: null
+
+    LawWithPhasesResponse:
+      type: object
+      properties:
+        data:
+          allOf:
+            - $ref: '#/components/schemas/Law'
+            - type: object
+              properties:
+                phases:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Phase'
+        error:
+          type: null
+
+    GetPhasesResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            phases:
+              type: array
+              items:
+                $ref: '#/components/schemas/Phase'
+        error:
+          type: null
+
+    PhaseResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Phase'
+        error:
+          type: null
+
+    PhaseWithStagesResponse:
+      type: object
+      properties:
+        data:
+          allOf:
+            - $ref: '#/components/schemas/Phase'
+            - type: object
+              properties:
+                stages:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Stage'
+        error:
+          type: null
+
+    GetStagesResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            stages:
+              type: array
+              items:
+                $ref: '#/components/schemas/Stage'
+        error:
+          type: null
+
+    GetAllStagesResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            stages:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/Stage'
+                  - type: object
+                    properties:
+                      phaseType:
+                        $ref: '#/components/schemas/PhaseType'
+        error:
+          type: null
+
+    StageResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Stage'
+        error:
+          type: null
+
+    StageDetailResponse:
+      type: object
+      properties:
+        data:
+          allOf:
+            - $ref: '#/components/schemas/Stage'
+            - type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/StageFile'
+                discussions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Discussion'
+        error:
+          type: null
+
+    StageFileResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/StageFile'
+        error:
+          type: null
+
+    GetDiscussionsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            discussions:
+              type: array
+              items:
+                $ref: '#/components/schemas/Discussion'
+        error:
+          type: null
+
+    DiscussionResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Discussion'
+        error:
+          type: null
+
+    DiffResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            sourceStage:
+              $ref: '#/components/schemas/Stage'
+            targetStage:
+              $ref: '#/components/schemas/Stage'
+            diff:
+              type: string
+              description: Unified diff format
+            additions:
+              type: integer
+            deletions:
+              type: integer
+        error:
+          type: null
+
+    AnalyzeResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            summary:
+              type: string
+              description: Krótkie podsumowanie zmian
+            changes:
+              type: array
+              items:
+                type: string
+              description: Lista głównych zmian
+            effects:
+              type: array
+              items:
+                type: string
+              description: Potencjalne efekty prawne
+            simplifiedExplanation:
+              type: string
+              description: Wyjaśnienie prostym językiem
+        error:
+          type: null
+
+    AdminStatsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            totalLaws:
+              type: integer
+            totalPhases:
+              type: integer
+            totalStages:
+              type: integer
+            totalDiscussions:
+              type: integer
+            lawsByPhase:
+              type: object
+              additionalProperties:
+                type: integer
+        error:
+          type: null
