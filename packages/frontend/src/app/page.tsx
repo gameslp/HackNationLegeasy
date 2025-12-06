@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import { useLaws } from '@/features/laws/hooks/useLaws';
+import { useRecentStage } from '@/features/admin/hooks/useAdmin';
 import { LawCard } from '@/features/laws/components/LawCard';
 import { Input, Select } from '@/components/ui/Input';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Search, Filter, Scale, FileText, Users, ArrowRight } from 'lucide-react';
+import { PhaseBadge } from '@/components/ui/Badge';
+import { Search, Filter, Scale, FileText, Users, ArrowRight, Clock, Calendar, User, MessageSquare } from 'lucide-react';
 import { PHASE_LABELS } from '@/lib/api/types';
 import Link from 'next/link';
 import { BlurText } from '@/components/ui/BlurText';
@@ -23,6 +25,7 @@ export default function HomePage() {
   const [search, setSearch] = useState('');
   const [phaseFilter, setPhaseFilter] = useState('');
   const { data, isLoading, error } = useLaws(search, phaseFilter);
+  const { data: recentStageData } = useRecentStage();
 
   return (
     <div className="space-y-12">
@@ -149,6 +152,107 @@ export default function HomePage() {
           </p>
         </div>
       </div>
+
+      {/* Recent Stage Section */}
+      {recentStageData?.data && (
+        <div className="relative">
+          <div className="absolute -top-20 left-0 w-96 h-96 bg-gradient-to-br from-primary-100/30 to-primary-200/20 rounded-full blur-3xl -z-10" />
+          <div className="bg-gradient-to-br from-white via-primary-50/30 to-white rounded-3xl p-8 shadow-xl border border-primary-200/60">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Clock className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Najnowszy etap</h2>
+                  <p className="text-sm text-gray-600">Ostatnio dodany do systemu</p>
+                </div>
+              </div>
+              <Link
+                href={`/laws/${recentStageData.data.phase.lawId}/phases/${recentStageData.data.phaseId}/stages/${recentStageData.data.id}`}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold px-6 py-3 rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+              >
+                Zobacz szczegóły
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left - Stage info */}
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <PhaseBadge phase={recentStageData.data.phase.type} />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-1">{recentStageData.data.name}</h3>
+                  <p className="text-sm text-gray-600 mb-2">{recentStageData.data.phase.law.name}</p>
+                  {recentStageData.data.description && (
+                    <p className="text-gray-700 leading-relaxed">{recentStageData.data.description}</p>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-4 text-sm">
+                  <div className="flex items-center gap-2 bg-white/80 px-4 py-2 rounded-lg">
+                    <Calendar className="w-4 h-4 text-primary-600" />
+                    <span className="text-gray-700">{new Date(recentStageData.data.date).toLocaleDateString('pl-PL')}</span>
+                  </div>
+                  {recentStageData.data.author && (
+                    <div className="flex items-center gap-2 bg-white/80 px-4 py-2 rounded-lg">
+                      <User className="w-4 h-4 text-primary-600" />
+                      <span className="text-gray-700">{recentStageData.data.author}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right - Stats */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-gray-200/60">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-gray-900">{recentStageData.data.files?.length || 0}</div>
+                      <div className="text-xs text-gray-600">Plików</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-gray-200/60">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                      <MessageSquare className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-gray-900">{recentStageData.data.discussions?.length || 0}</div>
+                      <div className="text-xs text-gray-600">Komentarzy</div>
+                    </div>
+                  </div>
+                </div>
+
+                {recentStageData.data.lawPdfPath && (
+                  <div className="col-span-2 bg-gradient-to-br from-green-50 to-emerald-50 backdrop-blur-sm rounded-2xl p-4 border border-green-200/60">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900">PDF ustawy dostępny</div>
+                        <div className="text-xs text-gray-600">
+                          {recentStageData.data.lawTextContent
+                            ? `${Math.round(recentStageData.data.lawTextContent.length / 1000)}k znaków`
+                            : 'Tekst wyekstrahowany'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Laws Section */}
       <div id="ustawy" className="scroll-mt-24">

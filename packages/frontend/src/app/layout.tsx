@@ -37,13 +37,26 @@ export default function RootLayout({
                       Proces Legislacyjny
                     </span>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     <Link
                       href="/"
-                      className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
+                      className="text-gray-700 hover:text-primary-700 hover:bg-primary-50 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
                     >
                       Ustawy
                     </Link>
+                    <Link
+                      href="/phases"
+                      className="text-gray-700 hover:text-primary-700 hover:bg-primary-50 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
+                    >
+                      Fazy
+                    </Link>
+                    <Link
+                      href="/stages"
+                      className="text-gray-700 hover:text-primary-700 hover:bg-primary-50 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
+                    >
+                      Etapy
+                    </Link>
+                    <div className="w-px h-6 bg-gray-300 mx-1"></div>
                     <Link
                       href="/admin"
                       className="bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 px-4 py-2 rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-200 active:scale-95"

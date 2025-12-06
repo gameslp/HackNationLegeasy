@@ -29,3 +29,72 @@ export const getStats = asyncHandler(async (req: Request, res: Response) => {
     lawsByPhase,
   });
 });
+
+export const getRecentStage = asyncHandler(async (req: Request, res: Response) => {
+  const recentStage = await prisma.stage.findFirst({
+    orderBy: {
+      createdAt: 'desc',
+    },
+    include: {
+      phase: {
+        include: {
+          law: true,
+        },
+      },
+      files: true,
+      discussions: {
+        orderBy: {
+          createdAt: 'desc',
+        },
+      },
+    },
+  });
+
+  if (!recentStage) {
+    sendSuccess(res, null);
+    return;
+  }
+
+  sendSuccess(res, recentStage);
+});
+
+export const getAllPhases = asyncHandler(async (req: Request, res: Response) => {
+  const phases = await prisma.phase.findMany({
+    include: {
+      law: true,
+      _count: {
+        select: {
+          stages: true,
+        },
+      },
+    },
+    orderBy: {
+      startDate: 'desc',
+    },
+  });
+
+  sendSuccess(res, { phases, total: phases.length });
+});
+
+export const getAllStages = asyncHandler(async (req: Request, res: Response) => {
+  const stages = await prisma.stage.findMany({
+    include: {
+      phase: {
+        include: {
+          law: true,
+        },
+      },
+      _count: {
+        select: {
+          files: true,
+          discussions: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
+  sendSuccess(res, { stages, total: stages.length });
+});
