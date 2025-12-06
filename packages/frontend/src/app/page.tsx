@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Search, Filter, Scale, FileText, Users, ArrowRight } from 'lucide-react';
 import { PHASE_LABELS } from '@/lib/api/types';
 import Link from 'next/link';
+import { BlurText } from '@/components/ui/BlurText';
 
 const phaseOptions = [
   { value: '', label: 'Wszystkie fazy' },
@@ -26,13 +27,14 @@ export default function HomePage() {
   return (
     <div className="space-y-12">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 shadow-2xl">
-        {/* Background decorations */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-black/10 rounded-full blur-3xl transform -translate-x-1/3 translate-y-1/3" />
-          {/* Polish flag stripe effect */}
-          <div className="absolute top-0 left-0 right-0 h-2 bg-white/90" />
+      <div className="relative overflow-hidden rounded-3xl shadow-2xl">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-primary-600 via-40% to-primary-800 animate-gradient"></div>
+        {/* Decorative blurs on top of gradient */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3" />
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary-900/30 rounded-full blur-3xl transform -translate-x-1/3 translate-y-1/3" />
+          <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-white/10 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2" />
         </div>
 
         {/* Content */}
@@ -45,12 +47,10 @@ export default function HomePage() {
                 Transparentny proces legislacyjny
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
-                Śledź ustawy
-                <br />
-                <span className="text-red-100">na każdym etapie</span>
-              </h1>
-
+              <div className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
+                <BlurText text='Śledź ustawy' />
+                <BlurText className="text-red-100" text="na każdym etapie" />
+              </div>
               <p className="text-lg sm:text-xl text-red-100/90 max-w-lg">
                 Przeglądaj projekty ustaw, porównuj zmiany między wersjami i zrozum proces legislacyjny dzięki analizie AI.
               </p>
@@ -116,32 +116,35 @@ export default function HomePage() {
 
       {/* Features Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mb-4">
-            <FileText className="w-6 h-6 text-primary-600" />
+        <div className="group relative bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-lg border border-gray-200/60 hover:shadow-2xl hover:border-primary-200 hover:-translate-y-2 transition-all duration-500">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary-100/30 rounded-full blur-3xl -z-10 group-hover:bg-primary-200/50 transition-colors duration-500" />
+          <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+            <FileText className="w-7 h-7 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Pełna historia zmian</h3>
-          <p className="text-gray-600 text-sm">
+          <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary-700 transition-colors">Pełna historia zmian</h3>
+          <p className="text-gray-600 leading-relaxed">
             Śledź każdą zmianę w projekcie ustawy od początku do końca procesu legislacyjnego.
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mb-4">
-            <Scale className="w-6 h-6 text-primary-600" />
+        <div className="group relative bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-lg border border-gray-200/60 hover:shadow-2xl hover:border-primary-200 hover:-translate-y-2 transition-all duration-500">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary-100/30 rounded-full blur-3xl -z-10 group-hover:bg-primary-200/50 transition-colors duration-500" />
+          <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+            <Scale className="w-7 h-7 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Porównanie wersji</h3>
-          <p className="text-gray-600 text-sm">
+          <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary-700 transition-colors">Porównanie wersji</h3>
+          <p className="text-gray-600 leading-relaxed">
             Porównuj różne wersje dokumentów i zobacz dokładnie co się zmieniło.
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mb-4">
-            <Users className="w-6 h-6 text-primary-600" />
+        <div className="group relative bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-lg border border-gray-200/60 hover:shadow-2xl hover:border-primary-200 hover:-translate-y-2 transition-all duration-500">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary-100/30 rounded-full blur-3xl -z-10 group-hover:bg-primary-200/50 transition-colors duration-500" />
+          <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+            <Users className="w-7 h-7 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Analiza AI</h3>
-          <p className="text-gray-600 text-sm">
+          <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary-700 transition-colors">Analiza AI</h3>
+          <p className="text-gray-600 leading-relaxed">
             Zrozum zmiany w ustawach dzięki wyjaśnieniom napisanym prostym językiem.
           </p>
         </div>

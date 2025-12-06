@@ -10,5 +10,8 @@
     "db:seed": "pnpm --filter @repo/database seed",
     "db:studio": "pnpm --filter @repo/database studio",
     "build": "pnpm -r build"
+  },
+  "dependencies": {
+    "motion": "^12.23.25"
   }
 }
