@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { useLaws } from '@/features/laws/hooks/useLaws';
 import { LawCard } from '@/features/laws/components/LawCard';
 import { Input, Select } from '@/components/ui/Input';
-import { Search } from 'lucide-react';
+import { ListSkeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Search, Filter } from 'lucide-react';
 import { PHASE_LABELS, PhaseType } from '@/lib/api/types';
 
 const phaseOptions = [
@@ -21,62 +23,85 @@ export default function HomePage() {
   const { data, isLoading, error } = useLaws(search, phaseFilter);
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="text-center space-y-4">
+        <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-gray-900 via-primary-800 to-gray-900 bg-clip-text text-transparent">
           Ustawy w procesie legislacyjnym
         </h1>
-        <p className="text-gray-600">
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
           Przeglądaj i śledź projekty ustaw na różnych etapach procesu legislacyjnego
         </p>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <Input
-            placeholder="Szukaj ustawy po nazwie lub autorze..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <div className="w-full sm:w-48">
-          <Select
-            options={phaseOptions}
-            value={phaseFilter}
-            onChange={(e) => setPhaseFilter(e.target.value)}
-          />
+      <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-gray-200/60">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 relative group">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary-600 transition-colors" />
+            <Input
+              placeholder="Szukaj ustawy po nazwie lub autorze..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="w-full sm:w-64 relative group">
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-primary-600 transition-colors pointer-events-none z-10" />
+            <Select
+              options={phaseOptions}
+              value={phaseFilter}
+              onChange={(e) => setPhaseFilter(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </div>
       </div>
 
       {/* Laws list */}
       {isLoading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Ładowanie...</p>
-        </div>
+        <ListSkeleton count={5} />
       ) : error ? (
-        <div className="text-center py-12">
-          <p className="text-red-600">Błąd ładowania ustaw</p>
-        </div>
+        <EmptyState
+          icon="alert"
+          title="Błąd ładowania ustaw"
+          description="Nie udało się pobrać listy ustaw. Spróbuj odświeżyć stronę."
+        />
       ) : data?.laws.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-600">Brak ustaw do wyświetlenia</p>
-        </div>
+        <EmptyState
+          icon="search"
+          title="Brak wyników"
+          description={
+            search || phaseFilter
+              ? 'Nie znaleziono ustaw spełniających kryteria wyszukiwania. Spróbuj zmienić filtry.'
+              : 'Brak ustaw w systemie.'
+          }
+        />
       ) : (
-        <div className="space-y-4">
-          {data?.laws.map((law) => (
-            <LawCard key={law.id} law={law} />
-          ))}
-        </div>
-      )}
+        <>
+          <div className="space-y-4">
+            {data?.laws.map((law, index) => (
+              <div
+                key={law.id}
+                style={{
+                  animation: 'fadeIn 0.5s ease-out',
+                  animationDelay: `${index * 50}ms`,
+                  animationFillMode: 'both',
+                }}
+              >
+                <LawCard law={law} />
+              </div>
+            ))}
+          </div>
 
-      {data && data.total > 0 && (
-        <p className="text-sm text-gray-500 mt-4 text-center">
-          Wyświetlono {data.laws.length} z {data.total} ustaw
-        </p>
+          {data && data.total > data.laws.length && (
+            <div className="text-center pt-6">
+              <p className="text-sm font-medium text-gray-600 bg-white/60 backdrop-blur-sm rounded-full px-6 py-3 inline-block shadow-sm">
+                Wyświetlono {data.laws.length} z {data.total} ustaw
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
