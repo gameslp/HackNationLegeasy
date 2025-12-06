@@ -7,7 +7,7 @@ import {
   deleteLaw,
   getAllStagesForLaw,
 } from '../controllers/lawsController';
-import { getDiff } from '../controllers/stagesController';
+import { getDiff, analyzeDiffHandler } from '../controllers/stagesController';
 import { validate } from '../middleware/validate';
 import {
   CreateLawRequestSchema,
@@ -25,5 +25,6 @@ router.put('/:lawId', validate(UpdateLawRequestSchema, 'body'), updateLaw);
 router.delete('/:lawId', deleteLaw);
 router.get('/:lawId/stages', getAllStagesForLaw);
 router.get('/:lawId/diff', validate(DiffQuerySchema, 'query'), getDiff);
+router.post('/:lawId/analyze-diff', analyzeDiffHandler);
 
 export default router;

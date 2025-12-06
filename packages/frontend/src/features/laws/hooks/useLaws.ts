@@ -11,6 +11,7 @@ import type {
   StageDetail,
   DiffResult,
   AnalysisResult,
+  DiffAnalysisResult,
   Discussion,
   StageFile,
 } from '@/lib/api/types';
@@ -222,6 +223,87 @@ export function useDiff(lawId: string, sourceStageId: string, targetStageId: str
         `/laws/${lawId}/diff?sourceStageId=${sourceStageId}&targetStageId=${targetStageId}`
       ),
     enabled: !!lawId && !!sourceStageId && !!targetStageId,
+  });
+}
+
+// Analyze Diff with AI
+export function useAnalyzeDiff() {
+  return useMutation({
+    mutationFn: ({
+      lawId,
+      diffContent,
+      sourceStage,
+      targetStage,
+    }: {
+      lawId: string;
+      diffContent: string;
+      sourceStage: string;
+      targetStage: string;
+    }) =>
+      apiClient.post<DiffAnalysisResult>(`/laws/${lawId}/analyze-diff`, {
+        diffContent,
+        sourceStage,
+        targetStage,
+      }),
+  });
+}
+
+// Law PDF
+export function useUploadLawPdf() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      lawId,
+      phaseId,
+      stageId,
+      file,
+    }: {
+      lawId: string;
+      phaseId: string;
+      stageId: string;
+      file: File;
+    }) =>
+      apiClient.uploadFile<{ stage: Stage; extractedTextLength: number }>(
+        `/laws/${lawId}/phases/${phaseId}/stages/${stageId}/law-pdf`,
+        file,
+        'application/pdf'
+      ),
+    onSuccess: (_, { lawId, phaseId, stageId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ['stage', lawId, phaseId, stageId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['allStages', lawId],
+      });
+    },
+  });
+}
+
+export function useDeleteLawPdf() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      lawId,
+      phaseId,
+      stageId,
+    }: {
+      lawId: string;
+      phaseId: string;
+      stageId: string;
+    }) =>
+      apiClient.delete(
+        `/laws/${lawId}/phases/${phaseId}/stages/${stageId}/law-pdf`
+      ),
+    onSuccess: (_, { lawId, phaseId, stageId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ['stage', lawId, phaseId, stageId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['allStages', lawId],
+      });
+    },
   });
 }
 

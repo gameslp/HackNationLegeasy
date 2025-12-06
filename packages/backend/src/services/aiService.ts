@@ -55,6 +55,8 @@ Przeanalizuj ten etap procesu legislacyjnego i odpowiedz w formacie JSON:
 
 Odpowiedz TYLKO w formacie JSON, bez dodatkowego tekstu.`;
 
+console.log("Generated prompt for analyzeStage:", prompt);
+
   try {
     const client = getOpenAIClient();
     const response = await client.chat.completions.create({
@@ -95,6 +97,76 @@ Odpowiedz TYLKO w formacie JSON, bez dodatkowego tekstu.`;
   }
 }
 
+export interface DiffAnalysisResult {
+  explanation: string;
+  keyChanges: string[];
+  impact: string;
+}
+
+export async function analyzeDiff(
+  diffContent: string,
+  sourceStage: string,
+  targetStage: string
+): Promise<DiffAnalysisResult> {
+  const prompt = `Jesteś ekspertem prawnym analizującym zmiany w polskich ustawach.
+
+Porównuję dwie wersje ustawy:
+- Wersja źródłowa: ${sourceStage}
+- Wersja docelowa: ${targetStage}
+
+Oto różnice między wersjami (format diff - linie zaczynające się od "+" zostały dodane, linie zaczynające się od "-" zostały usunięte):
+
+${diffContent.substring(0, 15000)}
+
+Wyjaśnij te zmiany PROSTYM JĘZYKIEM, zrozumiałym dla zwykłego obywatela. Odpowiedz w formacie JSON:
+{
+  "explanation": "Proste wyjaśnienie co się zmieniło i dlaczego to jest ważne (3-5 zdań)",
+  "keyChanges": ["Lista najważniejszych zmian w prostym języku"],
+  "impact": "Jak te zmiany mogą wpłynąć na obywateli (2-3 zdania)"
+}
+
+Odpowiedz TYLKO w formacie JSON, bez dodatkowego tekstu.`;
+
+console.log("Generated prompt for analyzeDiff:", prompt);
+
+  try {
+    const client = getOpenAIClient();
+    const response = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'Jesteś polskim ekspertem prawnym. Wyjaśniasz zmiany w ustawach prostym językiem zrozumiałym dla każdego. Odpowiadasz zawsze po polsku w formacie JSON.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 2000,
+    });
+
+    const content = response.choices[0]?.message?.content || '{}';
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]) as DiffAnalysisResult;
+    }
+
+    return {
+      explanation: 'Nie udało się przeanalizować zmian.',
+      keyChanges: [],
+      impact: 'Brak analizy.',
+    };
+  } catch (error) {
+    console.error('AI diff analysis error:', error);
+    return {
+      explanation: 'Błąd podczas analizy AI.',
+      keyChanges: [],
+      impact: 'Wystąpił błąd podczas generowania analizy.',
+    };
+  }
+}
+
 export async function analyzeFile(
   fileName: string,
   fileContent: string
@@ -115,6 +187,8 @@ Przeanalizuj ten dokument i odpowiedz w formacie JSON:
 }
 
 Odpowiedz TYLKO w formacie JSON, bez dodatkowego tekstu.`;
+
+console.log("Generated prompt for analyzeFile:", prompt);
 
   try {
     const client = getOpenAIClient();

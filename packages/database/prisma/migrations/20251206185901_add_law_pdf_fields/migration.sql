@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `Stage` ADD COLUMN `lawPdfName` VARCHAR(500) NULL,
+    ADD COLUMN `lawPdfPath` VARCHAR(1000) NULL;

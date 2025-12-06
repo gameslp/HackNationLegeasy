@@ -38,6 +38,8 @@ export interface Stage {
   author: string | null;
   description: string | null;
   governmentLinks: string[];
+  lawPdfPath: string | null;
+  lawPdfName: string | null;
   lawTextContent: string | null;
   order: number;
   createdAt: string;
@@ -89,6 +91,12 @@ export interface AnalysisResult {
   changes: string[];
   effects: string[];
   simplifiedExplanation: string;
+}
+
+export interface DiffAnalysisResult {
+  explanation: string;
+  keyChanges: string[];
+  impact: string;
 }
 
 export interface AdminStats {

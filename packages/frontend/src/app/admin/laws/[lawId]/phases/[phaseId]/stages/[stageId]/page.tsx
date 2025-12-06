@@ -8,19 +8,16 @@ import {
   useUpdateStage,
   useUploadFile,
   useDeleteFile,
+  useUploadLawPdf,
+  useDeleteLawPdf,
 } from '@/features/laws/hooks/useLaws';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Input, Textarea, Select } from '@/components/ui/Input';
+import { Input, Textarea } from '@/components/ui/Input';
 import { PhaseBadge } from '@/components/ui/Badge';
-import { FILE_TYPE_LABELS, FileType } from '@/lib/api/types';
-import { ArrowLeft, Save, Upload, Trash2, FileText, Plus, X } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Trash2, FileText, Plus, X, FileUp, Download } from 'lucide-react';
 import Link from 'next/link';
-
-const fileTypeOptions = Object.entries(FILE_TYPE_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}));
+import { FILE_TYPE_LABELS } from '@/lib/api/types';
 
 export default function AdminStagePage({
   params,
@@ -34,16 +31,17 @@ export default function AdminStagePage({
   const updateStage = useUpdateStage();
   const uploadFile = useUploadFile();
   const deleteFile = useDeleteFile();
+  const uploadLawPdf = useUploadLawPdf();
+  const deleteLawPdf = useDeleteLawPdf();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFileType, setSelectedFileType] = useState<FileType>('LAW_PDF');
+  const lawPdfInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: '',
     date: '',
     author: '',
     description: '',
-    lawTextContent: '',
     governmentLinks: [] as string[],
   });
 
@@ -61,7 +59,6 @@ export default function AdminStagePage({
         date: new Date(stage.date).toISOString().split('T')[0],
         author: stage.author || '',
         description: stage.description || '',
-        lawTextContent: stage.lawTextContent || '',
         governmentLinks: links,
       });
     }
@@ -79,7 +76,6 @@ export default function AdminStagePage({
         date: new Date(formData.date).toISOString(),
         author: formData.author || null,
         description: formData.description || null,
-        lawTextContent: formData.lawTextContent || null,
         governmentLinks: formData.governmentLinks,
       },
     });
@@ -111,7 +107,7 @@ export default function AdminStagePage({
       phaseId,
       stageId,
       file,
-      fileType: selectedFileType,
+      fileType: 'RELATED',
     });
 
     if (fileInputRef.current) {
@@ -124,6 +120,30 @@ export default function AdminStagePage({
       await deleteFile.mutateAsync({ lawId, phaseId, stageId, fileId });
     }
   };
+
+  const handleLawPdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    await uploadLawPdf.mutateAsync({
+      lawId,
+      phaseId,
+      stageId,
+      file,
+    });
+
+    if (lawPdfInputRef.current) {
+      lawPdfInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteLawPdf = async () => {
+    if (confirm('Czy na pewno chcesz usunąć PDF ustawy? Usunie to również wyekstrahowaną treść.')) {
+      await deleteLawPdf.mutateAsync({ lawId, phaseId, stageId });
+    }
+  };
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
   if (isLoading) {
     return (
@@ -235,14 +255,6 @@ export default function AdminStagePage({
               )}
             </div>
 
-            <Textarea
-              label="Treść ustawy (do porównania wersji)"
-              value={formData.lawTextContent}
-              onChange={(e) =>
-                setFormData({ ...formData, lawTextContent: e.target.value })
-              }
-              rows={12}
-            />
             <div className="flex justify-end">
               <Button type="submit" disabled={updateStage.isPending}>
                 <Save className="w-4 h-4 mr-2" />
@@ -253,25 +265,88 @@ export default function AdminStagePage({
         </CardContent>
       </Card>
 
+      {/* Law PDF section */}
+      <Card className="mb-8">
+        <CardHeader>
+          <h2 className="text-lg font-semibold">PDF Ustawy</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Główny dokument PDF ustawy dla tego etapu. Treść zostanie automatycznie wyekstrahowana do porównania wersji.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {stage?.lawPdfPath ? (
+            <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+              <div className="flex items-center space-x-3">
+                <FileText className="w-6 h-6 text-green-600" />
+                <div>
+                  <p className="font-medium text-gray-900">{stage.lawPdfName || 'law.pdf'}</p>
+                  <p className="text-xs text-gray-500">
+                    {stage.lawTextContent
+                      ? `Wyekstrahowano ${stage.lawTextContent.length} znaków tekstu`
+                      : 'Brak wyekstrahowanego tekstu'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <a
+                  href={`${API_URL}/laws/${lawId}/phases/${phaseId}/stages/${stageId}/law-pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-primary-700 bg-primary-50 rounded-md hover:bg-primary-100"
+                >
+                  <Download className="w-4 h-4 mr-1" />
+                  Pobierz
+                </a>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDeleteLawPdf}
+                  disabled={deleteLawPdf.isPending}
+                >
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="text-center">
+                <FileUp className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-600 mb-4">
+                  Prześlij PDF ustawy, aby umożliwić porównanie wersji
+                </p>
+                <input
+                  ref={lawPdfInputRef}
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleLawPdfUpload}
+                  className="hidden"
+                />
+                <Button
+                  variant="primary"
+                  onClick={() => lawPdfInputRef.current?.click()}
+                  disabled={uploadLawPdf.isPending}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {uploadLawPdf.isPending ? 'Przesyłanie...' : 'Prześlij PDF'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Files section */}
       <Card>
         <CardHeader>
-          <h2 className="text-lg font-semibold">Pliki</h2>
+          <h2 className="text-lg font-semibold">Pliki powiązane</h2>
         </CardHeader>
         <CardContent>
           {/* Upload form */}
           <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-end space-x-4">
-              <div className="flex-1">
-                <Select
-                  label="Typ pliku"
-                  options={fileTypeOptions}
-                  value={selectedFileType}
-                  onChange={(e) =>
-                    setSelectedFileType(e.target.value as FileType)
-                  }
-                />
-              </div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                Dodaj dokumenty powiązane z tym etapem (np. uzasadnienia, opinie, załączniki)
+              </p>
               <div>
                 <input
                   ref={fileInputRef}
@@ -286,7 +361,7 @@ export default function AdminStagePage({
                   disabled={uploadFile.isPending}
                 >
                   <Upload className="w-4 h-4 mr-2" />
-                  {uploadFile.isPending ? 'Wysyłanie...' : 'Wybierz plik'}
+                  {uploadFile.isPending ? 'Wysyłanie...' : 'Dodaj plik'}
                 </Button>
               </div>
             </div>

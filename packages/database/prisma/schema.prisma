@@ -69,12 +69,19 @@ model Stage {
   author          String?  @db.VarChar(255)
   description     String?  @db.Text
   governmentLinks Json     @default("[]") // Array of links
-  lawTextContent  String?  @db.LongText // Treść ustawy jako tekst (do diff)
+
+  // Główny plik PDF ustawy dla tego etapu
+  lawPdfPath      String?  @db.VarChar(1000) // Ścieżka do PDF ustawy
+  lawPdfName      String?  @db.VarChar(500)  // Oryginalna nazwa pliku PDF
+
+  // Treść wyekstrahowana z PDF (do diff tekstowego)
+  lawTextContent  String?  @db.LongText
+
   order           Int      // Kolejność etapu w fazie
   createdAt       DateTime @default(now())
 
   phase       Phase        @relation(fields: [phaseId], references: [id], onDelete: Cascade)
-  files       StageFile[]
+  files       StageFile[]  // Pliki powiązane (dodatkowe dokumenty)
   discussions Discussion[]
 
   @@index([phaseId])

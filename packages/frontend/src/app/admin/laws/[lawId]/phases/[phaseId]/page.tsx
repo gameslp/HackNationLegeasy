@@ -45,7 +45,6 @@ export default function AdminPhasePage({
     date: new Date().toISOString().split('T')[0],
     author: '',
     description: '',
-    lawTextContent: '',
   });
 
   useEffect(() => {
@@ -87,7 +86,6 @@ export default function AdminPhasePage({
         date: new Date(stageFormData.date).toISOString(),
         author: stageFormData.author || null,
         description: stageFormData.description || null,
-        lawTextContent: stageFormData.lawTextContent || null,
         governmentLinks: [],
       },
     });
@@ -98,7 +96,6 @@ export default function AdminPhasePage({
       date: new Date().toISOString().split('T')[0],
       author: '',
       description: '',
-      lawTextContent: '',
     });
   };
 
@@ -236,17 +233,9 @@ export default function AdminPhasePage({
                   })
                 }
               />
-              <Textarea
-                label="Treść ustawy (opcjonalna - do diff)"
-                value={stageFormData.lawTextContent}
-                onChange={(e) =>
-                  setStageFormData({
-                    ...stageFormData,
-                    lawTextContent: e.target.value,
-                  })
-                }
-                rows={8}
-              />
+              <p className="text-sm text-gray-500">
+                Po utworzeniu etapu będziesz mógł dodać PDF ustawy i pliki powiązane.
+              </p>
               <div className="flex justify-end space-x-2">
                 <Button
                   type="button"

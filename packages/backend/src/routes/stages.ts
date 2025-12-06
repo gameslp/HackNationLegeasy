@@ -6,6 +6,9 @@ import {
   updateStage,
   deleteStage,
   analyzeStageHandler,
+  uploadLawPdf,
+  downloadLawPdf,
+  deleteLawPdf,
 } from '../controllers/stagesController';
 import { getDiscussions, createDiscussion } from '../controllers/discussionsController';
 import { uploadFile, downloadFile, deleteFile } from '../controllers/filesController';
@@ -30,7 +33,12 @@ router.delete('/:stageId', deleteStage);
 // AI Analysis
 router.post('/:stageId/analyze', validate(AnalyzeRequestSchema, 'body'), analyzeStageHandler);
 
-// Files
+// Law PDF (main law document for stage)
+router.post('/:stageId/law-pdf', upload.single('file'), uploadLawPdf);
+router.get('/:stageId/law-pdf', downloadLawPdf);
+router.delete('/:stageId/law-pdf', deleteLawPdf);
+
+// Files (additional related documents)
 router.post('/:stageId/files', upload.single('file'), uploadFile);
 router.get('/:stageId/files/:fileId', downloadFile);
 router.delete('/:stageId/files/:fileId', deleteFile);

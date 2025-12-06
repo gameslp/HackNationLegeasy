@@ -5,7 +5,8 @@ import { asyncHandler } from '../middleware/asyncHandler';
 import { sendSuccess } from '../middleware/response';
 import { AppError } from '../middleware/errorHandler';
 import { computeDiff } from '../services/diffService';
-import { analyzeStage, analyzeFile } from '../services/aiService';
+import { analyzeStage, analyzeFile, analyzeDiff } from '../services/aiService';
+import { extractTextFromPdf } from '../services/pdfService';
 import type { CreateStageRequest, UpdateStageRequest, DiffQuery, AnalyzeRequest } from '@repo/validation';
 import fs from 'fs/promises';
 import path from 'path';
@@ -195,4 +196,132 @@ export const analyzeStageHandler = asyncHandler(async (req: Request, res: Respon
     );
     sendSuccess(res, result);
   }
+});
+
+/**
+ * Upload law PDF for a stage and extract text content
+ */
+export const uploadLawPdf = asyncHandler(async (req: Request, res: Response) => {
+  const { stageId } = req.params;
+  const file = req.file;
+
+  if (!file) {
+    throw new AppError('No file uploaded', 'BAD_REQUEST', 400);
+  }
+
+  if (file.mimetype !== 'application/pdf') {
+    // Clean up uploaded file
+    await fs.unlink(file.path).catch(() => {});
+    throw new AppError('Only PDF files are allowed', 'BAD_REQUEST', 400);
+  }
+
+  // Extract text from PDF
+  let extractedText = '';
+  try {
+    const pdfData = await extractTextFromPdf(file.path);
+    extractedText = pdfData.text;
+  } catch (error) {
+    console.error('Failed to extract text from PDF:', error);
+    // Continue without extracted text
+  }
+
+  // Update stage with PDF info and extracted text
+  const stage = await prisma.stage.update({
+    where: { id: stageId },
+    data: {
+      lawPdfPath: file.path,
+      lawPdfName: file.originalname,
+      lawTextContent: extractedText || null,
+    },
+  });
+
+  sendSuccess(res, {
+    stage,
+    extractedTextLength: extractedText.length,
+  });
+});
+
+/**
+ * Download law PDF for a stage
+ */
+export const downloadLawPdf = asyncHandler(async (req: Request, res: Response) => {
+  const { stageId } = req.params;
+
+  const stage = await prisma.stage.findUnique({
+    where: { id: stageId },
+  });
+
+  if (!stage || !stage.lawPdfPath) {
+    throw new AppError('Law PDF not found', 'NOT_FOUND', 404);
+  }
+
+  try {
+    await fs.access(stage.lawPdfPath);
+  } catch {
+    throw new AppError('Law PDF file not found on disk', 'NOT_FOUND', 404);
+  }
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="${stage.lawPdfName || 'law.pdf'}"`
+  );
+  res.sendFile(path.resolve(stage.lawPdfPath));
+});
+
+/**
+ * Delete law PDF from a stage
+ */
+export const deleteLawPdf = asyncHandler(async (req: Request, res: Response) => {
+  const { stageId } = req.params;
+
+  const stage = await prisma.stage.findUnique({
+    where: { id: stageId },
+  });
+
+  if (!stage) {
+    throw new AppError('Stage not found', 'NOT_FOUND', 404);
+  }
+
+  if (stage.lawPdfPath) {
+    try {
+      await fs.unlink(stage.lawPdfPath);
+    } catch (e) {
+      console.error('Failed to delete PDF file:', e);
+    }
+  }
+
+  await prisma.stage.update({
+    where: { id: stageId },
+    data: {
+      lawPdfPath: null,
+      lawPdfName: null,
+      lawTextContent: null,
+    },
+  });
+
+  sendSuccess(res, { success: true });
+});
+
+/**
+ * Analyze diff content using AI
+ */
+export const analyzeDiffHandler = asyncHandler(async (req: Request, res: Response) => {
+  const { diffContent, sourceStage, targetStage } = req.body as {
+    diffContent: string;
+    sourceStage: string;
+    targetStage: string;
+  };
+
+  if (!diffContent) {
+    throw new AppError('Diff content is required', 'BAD_REQUEST', 400);
+  }
+
+  const result = await analyzeDiff(
+    diffContent,
+    sourceStage || 'Wersja źródłowa',
+    targetStage || 'Wersja docelowa'
+  );
+
+  sendSuccess(res, result);
 });

@@ -1,7 +1,7 @@
 'use client';
 
-import { use, useState } from 'react';
-import { useLaw, usePhase, useStage, useAnalyze } from '@/features/laws/hooks/useLaws';
+import { use, useState, useMemo } from 'react';
+import { useLaw, usePhase, useStage, useAnalyze, useAllStages, useDiff } from '@/features/laws/hooks/useLaws';
 import { DiscussionSection } from '@/features/laws/components/DiscussionSection';
 import { PhaseBadge } from '@/components/ui/Badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
@@ -15,9 +15,12 @@ import {
   ExternalLink,
   Sparkles,
   Loader2,
+  GitCompare,
+  Plus,
+  Minus,
 } from 'lucide-react';
 import Link from 'next/link';
-import { FILE_TYPE_LABELS } from '@/lib/api/types';
+import { FILE_TYPE_LABELS, PHASE_LABELS } from '@/lib/api/types';
 
 export default function StagePage({
   params,
@@ -28,6 +31,7 @@ export default function StagePage({
   const { data: law } = useLaw(lawId);
   const { data: phase } = usePhase(lawId, phaseId);
   const { data: stage, isLoading, error } = useStage(lawId, phaseId, stageId);
+  const { data: allStagesData } = useAllStages(lawId);
   const analyze = useAnalyze();
   const [analysisResult, setAnalysisResult] = useState<{
     summary: string;
@@ -35,6 +39,32 @@ export default function StagePage({
     effects: string[];
     simplifiedExplanation: string;
   } | null>(null);
+  const [showDiff, setShowDiff] = useState(false);
+
+  // Find the previous stage with lawTextContent
+  const previousStageWithText = useMemo(() => {
+    if (!allStagesData?.stages || !stage) return null;
+
+    // Get all stages with text content, sorted by order
+    const stagesWithText = allStagesData.stages
+      .filter(s => s.lawTextContent && s.id !== stageId)
+      .sort((a, b) => a.order - b.order);
+
+    // Find the current stage's order
+    const currentStage = allStagesData.stages.find(s => s.id === stageId);
+    if (!currentStage) return null;
+
+    // Find the most recent stage before current that has text
+    const previousStages = stagesWithText.filter(s => s.order < currentStage.order);
+    return previousStages.length > 0 ? previousStages[previousStages.length - 1] : null;
+  }, [allStagesData, stage, stageId]);
+
+  // Fetch diff when showDiff is true
+  const { data: diffResult, isLoading: loadingDiff } = useDiff(
+    lawId,
+    showDiff && previousStageWithText ? previousStageWithText.id : '',
+    showDiff ? stageId : ''
+  );
 
   const handleAnalyze = async (fileId?: string) => {
     const result = await analyze.mutateAsync({
@@ -134,8 +164,8 @@ export default function StagePage({
             </div>
           )}
 
-          {/* AI Analysis button */}
-          <div className="mt-4">
+          {/* Action buttons */}
+          <div className="mt-4 flex flex-wrap gap-2">
             <Button
               variant="secondary"
               onClick={() => handleAnalyze()}
@@ -148,9 +178,97 @@ export default function StagePage({
               )}
               Analizuj AI
             </Button>
+
+            {/* Show changes button - only if current stage has text and there's a previous stage with text */}
+            {stage.lawTextContent && previousStageWithText && (
+              <Button
+                variant={showDiff ? 'primary' : 'secondary'}
+                onClick={() => setShowDiff(!showDiff)}
+              >
+                <GitCompare className="w-4 h-4 mr-2" />
+                {showDiff ? 'Ukryj zmiany' : 'Pokaż zmiany'}
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Diff with previous stage */}
+      {showDiff && previousStageWithText && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <GitCompare className="w-5 h-5 text-primary-600" />
+                <h3 className="text-lg font-semibold">Zmiany od poprzedniej wersji</h3>
+              </div>
+              {diffResult && (
+                <div className="flex items-center space-x-4 text-sm">
+                  <span className="flex items-center text-green-600">
+                    <Plus className="w-4 h-4 mr-1" />
+                    {diffResult.additions} dodanych
+                  </span>
+                  <span className="flex items-center text-red-600">
+                    <Minus className="w-4 h-4 mr-1" />
+                    {diffResult.deletions} usuniętych
+                  </span>
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600">
+                Porównanie z etapem:{' '}
+                <Link
+                  href={`/laws/${lawId}/phases/${previousStageWithText.phaseId}/stages/${previousStageWithText.id}`}
+                  className="font-medium text-primary-600 hover:underline"
+                >
+                  {previousStageWithText.phaseType ? `${PHASE_LABELS[previousStageWithText.phaseType]}: ` : ''}
+                  {previousStageWithText.name}
+                </Link>
+              </p>
+            </div>
+
+            {loadingDiff ? (
+              <div className="text-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-primary-600 mx-auto" />
+                <p className="mt-2 text-gray-600">Generowanie porównania...</p>
+              </div>
+            ) : diffResult?.diff ? (
+              <div className="bg-gray-50 rounded-lg overflow-x-auto p-4">
+                {diffResult.diff.split('\n').map((line, index) => {
+                  let className = 'font-mono text-sm';
+                  let icon = null;
+
+                  if (line.startsWith('+') && !line.startsWith('+++')) {
+                    className += ' bg-green-50 text-green-800';
+                    icon = <Plus className="w-4 h-4 text-green-600 inline mr-2" />;
+                  } else if (line.startsWith('-') && !line.startsWith('---')) {
+                    className += ' bg-red-50 text-red-800';
+                    icon = <Minus className="w-4 h-4 text-red-600 inline mr-2" />;
+                  } else if (line.startsWith('@@')) {
+                    className += ' bg-blue-50 text-blue-800';
+                  } else {
+                    className += ' text-gray-600';
+                  }
+
+                  return (
+                    <div key={index} className={`${className} px-2 py-0.5`}>
+                      {icon}
+                      {line}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-4">
+                Brak różnic między wersjami
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* AI Analysis Result */}
       {analysisResult && (
