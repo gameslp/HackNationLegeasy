@@ -71,15 +71,16 @@ export function DiscussionSection({
       <CardContent>
         {/* Nickname modal */}
         {showNicknameModal && (
-          <div className="mb-4 p-4 bg-primary-50 rounded-lg border border-primary-200">
-            <p className="text-sm text-gray-700 mb-2">
+          <div className="mb-6 p-5 bg-gradient-to-br from-primary-50 to-blue-50 rounded-xl border-2 border-primary-200 shadow-md animate-in fade-in duration-300">
+            <p className="text-sm font-semibold text-gray-700 mb-3">
               Podaj swój nick, aby dodawać komentarze:
             </p>
-            <div className="flex space-x-2">
+            <div className="flex gap-2">
               <Input
                 placeholder="Twój nick"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
+                className="flex-1"
               />
               <Button
                 onClick={() => handleSetNickname(nickname)}
@@ -92,26 +93,45 @@ export function DiscussionSection({
         )}
 
         {/* Comments list */}
-        <div className="space-y-4 mb-6">
+        <div className="space-y-3 mb-6">
           {discussions.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">
-              Brak komentarzy. Bądź pierwszy!
-            </p>
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MessageCircle className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-gray-500 font-medium">
+                Brak komentarzy. Bądź pierwszy!
+              </p>
+            </div>
           ) : (
-            discussions.map((discussion) => (
+            discussions.map((discussion, index) => (
               <div
                 key={discussion.id}
-                className="bg-gray-50 rounded-lg p-4"
+                className="bg-gradient-to-br from-gray-50 to-slate-50/50 rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-all duration-200 hover:shadow-md"
+                style={{ animationDelay: `${index * 50}ms` }}
               >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="font-medium text-gray-900">
-                    {discussion.nickname}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {new Date(discussion.createdAt).toLocaleString('pl-PL')}
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-primary-100 to-primary-200 rounded-full flex items-center justify-center">
+                      <span className="text-xs font-bold text-primary-700">
+                        {discussion.nickname.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900">
+                      {discussion.nickname}
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-500 font-medium">
+                    {new Date(discussion.createdAt).toLocaleString('pl-PL', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
                   </span>
                 </div>
-                <p className="text-gray-700 whitespace-pre-wrap">
+                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed pl-10">
                   {discussion.content}
                 </p>
               </div>
@@ -120,7 +140,7 @@ export function DiscussionSection({
         </div>
 
         {/* Add comment form */}
-        <form onSubmit={handleSubmit} className="flex space-x-2">
+        <form onSubmit={handleSubmit} className="flex gap-2">
           <div className="flex-1">
             <Textarea
               placeholder={
@@ -132,22 +152,30 @@ export function DiscussionSection({
               onChange={(e) => setContent(e.target.value)}
               onClick={() => !nickname && setShowNicknameModal(true)}
               rows={2}
+              className="resize-none"
             />
           </div>
           <Button
             type="submit"
             disabled={!content.trim() || !nickname || createDiscussion.isPending}
+            size="lg"
+            className="self-end"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-5 h-5" />
           </Button>
         </form>
 
         {nickname && (
-          <p className="text-xs text-gray-500 mt-2">
-            Komentujesz jako: <strong>{nickname}</strong>{' '}
+          <p className="text-xs text-gray-500 mt-3 flex items-center gap-2">
+            <span className="w-6 h-6 bg-gradient-to-br from-primary-100 to-primary-200 rounded-full flex items-center justify-center">
+              <span className="text-[10px] font-bold text-primary-700">
+                {nickname.charAt(0).toUpperCase()}
+              </span>
+            </span>
+            Komentujesz jako: <strong className="text-gray-700">{nickname}</strong>
             <button
               onClick={() => setShowNicknameModal(true)}
-              className="text-primary-600 hover:underline"
+              className="text-primary-600 hover:text-primary-700 hover:underline font-medium ml-1"
             >
               (zmień)
             </button>
