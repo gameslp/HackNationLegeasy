@@ -23,16 +23,71 @@ export default function HomePage() {
   const { data, isLoading, error } = useLaws(search, phaseFilter);
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-gray-900 via-primary-800 to-gray-900 bg-clip-text text-transparent">
-          Ustawy w procesie legislacyjnym
-        </h1>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-          Przeglądaj i śledź projekty ustaw na różnych etapach procesu legislacyjnego
-        </p>
+    <>
+      {/* Hero Section with Red Accent Background - Full Width */}
+      <div style={{height: "calc(100vh - 3rem)"}}></div>
+      <div className="absolute w-screen inset-0 left-0 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 overflow-hidden">
+        {/* Red gradient background */}
+        <div>
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/10 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3"></div>
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-black/10 rounded-full blur-3xl transform -translate-x-1/3 translate-y-1/3"></div>
+          <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-white/5 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
+
+          {/* Mesh pattern overlay */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-40"></div>
+        </div>
+
+        {/* Content */}
+        <div className="relative w-full px-6 sm:px-12 lg:px-24 xl:px-32 py-24 sm:py-32 lg:py-40">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+              {/* Left side - Text content */}
+              <div className="space-y-8">
+                {/* Main Heading */}
+                <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-tight">
+                  Ustawy w procesie
+                  <br />
+                  <span className="bg-gradient-to-r from-white to-red-100 bg-clip-text text-transparent">
+                    legislacyjnym
+                  </span>
+                </h1>
+
+                {/* Subtitle */}
+                <p className="text-xl sm:text-2xl lg:text-3xl text-red-100 leading-relaxed font-medium">
+                  Przeglądaj i śledź projekty ustaw na różnych etapach procesu legislacyjnego
+                </p>
+
+                {/* CTA or additional text */}
+                <div className="pt-4">
+                  <p className="text-lg text-red-50/90">
+                    Transparentność i dostępność dla każdego obywatela
+                  </p>
+                </div>
+              </div>
+
+              {/* Right side - Stats cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-6">
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-8 py-8 text-white hover:bg-white/15 transition-all duration-300 hover:scale-105">
+                  <div className="text-5xl lg:text-6xl font-bold mb-2">{data?.total || '...'}</div>
+                  <div className="text-base lg:text-lg text-red-100 font-medium">Aktywnych ustaw</div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-8 py-8 text-white hover:bg-white/15 transition-all duration-300 hover:scale-105">
+                  <div className="text-5xl lg:text-6xl font-bold mb-2">6</div>
+                  <div className="text-base lg:text-lg text-red-100 font-medium">Faz procesu legislacyjnego</div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-8 py-8 text-white hover:bg-white/15 transition-all duration-300 hover:scale-105">
+                  <div className="text-5xl lg:text-6xl font-bold mb-2">100%</div>
+                  <div className="text-base lg:text-lg text-red-100 font-medium">Przejrzystości procesu</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Main content - uses parent container */}
+      <div className="space-y-8">
 
       {/* Filters */}
       <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-gray-200/60">
@@ -103,6 +158,7 @@ export default function HomePage() {
           )}
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 }
