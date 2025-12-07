@@ -25,6 +25,9 @@ COPY packages/backend ./packages/backend
 # Generate Prisma client
 RUN pnpm --filter @repo/database generate
 
+# Build validation package
+RUN pnpm --filter @repo/validation build
+
 # Build backend
 RUN pnpm --filter @repo/backend build
 
@@ -57,8 +60,8 @@ COPY --from=builder /app/node_modules/.pnpm/@prisma+client@*/node_modules/.prism
 # Copy database source for re-exports
 COPY packages/database/src ./packages/database/src
 
-# Copy validation source
-COPY packages/validation/src ./packages/validation/src
+# Copy built validation package
+COPY --from=builder /app/packages/validation/dist ./packages/validation/dist
 
 # Copy built backend
 COPY --from=builder /app/packages/backend/dist ./packages/backend/dist
