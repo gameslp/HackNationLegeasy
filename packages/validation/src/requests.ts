@@ -141,6 +141,7 @@ export type ScanLinksRequest = z.infer<typeof ScanLinksRequestSchema>;
 export const ImportSejmProcessSchema = z.object({
   term: z.number().int().positive().min(1).max(20),
   processNumber: z.string().min(1).max(50),
+  lawId: z.string().optional(), // Opcjonalne ID istniejącej ustawy do zaimportowania danych
 });
 
 export type ImportSejmProcessRequest = z.infer<typeof ImportSejmProcessSchema>;

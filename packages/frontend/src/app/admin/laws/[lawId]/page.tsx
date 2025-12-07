@@ -122,6 +122,25 @@ export default function AdminLawPage({
     }
   };
 
+function parseSejmUrl(url: string): { term: number; processNumber: string } | null {
+    try {
+      // Wzorzec: sejm{TERM}.nsf/PrzebiegProc.xsp?nr={NUMBER}
+      const match = url.match(/sejm(\d+)\.nsf\/PrzebiegProc\.xsp\?nr=(\d+)/i);
+
+      if (match) {
+        return {
+          term: parseInt(match[1], 10),
+          processNumber: match[2],
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.warn(`Failed to parse Sejm URL: ${url}`, error);
+      return null;
+    }
+  }
+
   const handleImportFromSejm = async () => {
     if (!formData.term || !formData.processNumber) {
       return;
@@ -131,9 +150,16 @@ export default function AdminLawPage({
       const result = await importSejmProcess.mutateAsync({
         term: parseInt(formData.term),
         processNumber: formData.processNumber,
+        lawId: isNew ? undefined : lawId, // Jeśli to istniejąca ustawa, przekaż lawId
       });
-      // Przekieruj do nowo utworzonej ustawy
-      router.push(`/admin/laws/${result.id}`);
+
+      if (isNew) {
+        // Przekieruj do nowo utworzonej ustawy
+        router.push(`/admin/laws/${result.id}`);
+      } else {
+        // Odśwież dane istniejącej ustawy
+        window.location.reload();
+      }
     } catch (error) {
       console.error('Import failed:', error);
     }
@@ -213,11 +239,11 @@ export default function AdminLawPage({
             </div>
 
             {/* Sejm Import Fields */}
-            {isNew && (
+            {(isNew || (!law?.term && !law?.processNumber)) && (
               <>
                 <div className="border-t pt-4 mt-4">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                    Import z Sejm API (opcjonalny)
+                    {isNew ? 'Import z Sejm API (opcjonalny)' : 'Zaimportuj dane z Sejm API'}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input
@@ -240,6 +266,21 @@ export default function AdminLawPage({
                       }
                       placeholder="1"
                     />
+                   <Input
+                      label="Lub podaj link do procesu w Sejmie"
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const p = parseSejmUrl(val);
+                        console.log(p);
+                        if(p && p.processNumber && p.term) {
+                        setFormData({
+                          ...formData,
+                          processNumber: p.processNumber,
+                          term: p.term.toString()
+                        });
+                      }}}
+                      placeholder="1"
+                    /> 
                   </div>
                   {importSejmProcess.isError && (
                     <div className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded">
@@ -265,21 +306,25 @@ export default function AdminLawPage({
                       ) : (
                         <>
                           <Download className="w-4 h-4 mr-2" />
-                          Importuj z Sejm API
+                          {isNew ? 'Importuj z Sejm API' : 'Zaimportuj dane Sejmu'}
                         </>
                       )}
                     </Button>
                     <p className="text-xs text-gray-500 mt-2">
-                      Import automatycznie utworzy ustawę wraz z fazami i
-                      etapami z Sejm API
+                      {isNew
+                        ? 'Import automatycznie utworzy ustawę wraz z fazami i etapami z Sejm API'
+                        : 'Import doda fazy i etapy z Sejm API do tej ustawy. Jeśli nazwa się różni, zostanie dodana do opisu.'
+                      }
                     </p>
                   </div>
                 </div>
-                <div className="border-t pt-4 mt-4">
-                  <p className="text-sm text-gray-600 mb-3">
-                    Lub utwórz ustawę ręcznie:
-                  </p>
-                </div>
+                {isNew && (
+                  <div className="border-t pt-4 mt-4">
+                    <p className="text-sm text-gray-600 mb-3">
+                      Lub utwórz ustawę ręcznie:
+                    </p>
+                  </div>
+                )}
               </>
             )}
 

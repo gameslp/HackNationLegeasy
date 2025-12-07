@@ -9,6 +9,7 @@ import {
   MappedPhase,
   MappedStage,
   PhaseType,
+  SejmEliActResponse,
 } from '../types/sejm-api';
 
 const SEJM_API_BASE = 'https://api.sejm.gov.pl/sejm';
@@ -90,6 +91,102 @@ export class SejmApiService {
   }
 
   /**
+   * Pobiera plik PDF z pełnego URL (np. reportFile) i zapisuje lokalnie
+   */
+  async downloadPdfFromUrl(
+    url: string,
+    targetDir: string,
+    customFileName?: string
+  ): Promise<{ filePath: string; fileName: string } | null> {
+    try {
+      // Wyciągnij nazwę pliku z URL jeśli nie podano customFileName
+      const urlParts = url.split('/');
+      const urlFileName = urlParts[urlParts.length - 1];
+      const fileName = customFileName || urlFileName;
+      const filePath = path.join(targetDir, fileName);
+
+      // Sprawdź czy plik już istnieje
+      try {
+        await fs.access(filePath);
+        console.log(`PDF already exists: ${fileName}`);
+        return { filePath, fileName };
+      } catch {
+        // Plik nie istnieje, pobierz
+      }
+
+      const response = await axios.get(url, {
+        responseType: 'arraybuffer',
+        timeout: 30000,
+        maxRedirects: 5,
+      });
+
+      // Utwórz folder jeśli nie istnieje
+      await fs.mkdir(targetDir, { recursive: true });
+
+      // Zapisz plik
+      await fs.writeFile(filePath, response.data);
+
+      console.log(`Downloaded PDF from URL: ${fileName}`);
+      return { filePath, fileName };
+    } catch (error) {
+      console.warn(`Failed to download PDF from ${url}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Pobiera informacje o akcie prawnym z ELI API
+   */
+  async fetchEliAct(eliApiUrl: string): Promise<SejmEliActResponse | null> {
+    try {
+      const response = await axios.get<SejmEliActResponse>(eliApiUrl);
+      return response.data;
+    } catch (error) {
+      console.warn(`Failed to fetch ELI act from ${eliApiUrl}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Pobiera PDF aktu prawnego z ELI API
+   */
+  async downloadEliPdf(
+    eliApiUrl: string,
+    targetDir: string
+  ): Promise<{ filePath: string; fileName: string; title: string } | null> {
+    try {
+      // Pobierz informacje o akcie
+      const actInfo = await this.fetchEliAct(eliApiUrl);
+
+      if (!actInfo || !actInfo.textPDF) {
+        console.log(`No PDF available for ${eliApiUrl}`);
+        return null;
+      }
+
+      // URL do PDF to {eliApiUrl}/text.pdf
+      const pdfUrl = `${eliApiUrl}/text.pdf`;
+
+      // Nazwa pliku bazowana na ELI
+      const eliSafe = actInfo.ELI.replace(/\//g, '_');
+      const fileName = `eli_${eliSafe}.pdf`;
+
+      const result = await this.downloadPdfFromUrl(pdfUrl, targetDir, fileName);
+
+      if (result) {
+        return {
+          ...result,
+          title: actInfo.title,
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.warn(`Failed to download ELI PDF from ${eliApiUrl}:`, error);
+      return null;
+    }
+  }
+
+  /**
    * Mapuje typ etapu Sejm na fazę w naszym systemie
    */
   private mapStageTypeToPhase(stageType: string, stageName: string): PhaseType {
@@ -156,6 +253,7 @@ export class SejmApiService {
       description: this.buildStageDescription(stage),
       governmentLinks: links,
       printNumber: stage.printNumber || null,
+      reportFile: null,
       order: stageOrder,
     };
 
@@ -175,7 +273,8 @@ export class SejmApiService {
           author: child.committeeCode || null,
           description: this.buildChildDescription(child),
           governmentLinks: childLinks,
-          printNumber: null,
+          printNumber: child.printNumber || null,
+          reportFile: child.reportFile || null,
           order: stageOrder + idx + 0.1, // Sub-order dla children
         };
 
@@ -224,6 +323,22 @@ export class SejmApiService {
 
     if (child.type) {
       parts.push(`Typ: ${child.type}`);
+    }
+
+    if (child.printNumber) {
+      parts.push(`Druk nr ${child.printNumber}`);
+    }
+
+    if (child.reportFile) {
+      parts.push(`Sprawozdanie komisji dostępne`);
+    }
+
+    if (child.rapporteurName) {
+      parts.push(`Sprawozdawca: ${child.rapporteurName}`);
+    }
+
+    if (child.proposal) {
+      parts.push(`Wniosek: ${child.proposal}`);
     }
 
     if (child.voting) {

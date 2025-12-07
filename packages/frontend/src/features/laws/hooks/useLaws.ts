@@ -449,10 +449,13 @@ export function useImportSejmProcess() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ term, processNumber }: { term: number; processNumber: string }) =>
-      apiClient.post<LawWithPhases>('/admin/laws/import', { term, processNumber }),
-    onSuccess: () => {
+    mutationFn: ({ term, processNumber, lawId }: { term: number; processNumber: string; lawId?: string }) =>
+      apiClient.post<LawWithPhases>('/admin/laws/import', { term, processNumber, lawId }),
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['laws'] });
+      if (data.id) {
+        queryClient.invalidateQueries({ queryKey: ['law', data.id] });
+      }
     },
   });
 }

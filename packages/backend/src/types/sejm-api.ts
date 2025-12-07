@@ -28,6 +28,14 @@ export interface SejmStageChild {
   stageType: string;
   type?: string;
   voting?: SejmVoting;
+  // Committee Report fields
+  reportFile?: string;
+  printNumber?: string;
+  proposal?: string;
+  rapporteurName?: string;
+  rapporteurID?: string;
+  minorityMotions?: number;
+  subCommittee?: boolean;
 }
 
 export interface SejmStage {
@@ -41,7 +49,7 @@ export interface SejmStage {
 }
 
 export interface SejmProcessResponse {
-  ELI: string;
+  ELI?: string;
   UE: string;
   address?: string;
   changeDate?: string;
@@ -74,6 +82,18 @@ export interface SejmPrint {
   processPrint: string[];
 }
 
+export interface SejmEliActResponse {
+  ELI: string;
+  address: string;
+  title: string;
+  textPDF: boolean;
+  textHTML: boolean;
+  texts: Array<{
+    fileName: string;
+    type: string;
+  }>;
+}
+
 // Typy pomocnicze dla mapowania
 export type PhaseType = 'PRECONSULTATION' | 'RCL' | 'SEJM' | 'SENAT' | 'PRESIDENT' | 'JOURNAL';
 
@@ -84,6 +104,7 @@ export interface MappedStage {
   description: string | null;
   governmentLinks: string[];
   printNumber: string | null;
+  reportFile: string | null;
   order: number;
 }
 
