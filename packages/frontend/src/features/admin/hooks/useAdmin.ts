@@ -14,7 +14,7 @@ export function useAdminStats() {
 export function useRecentStage() {
   return useQuery({
     queryKey: ['recentStage'],
-    queryFn: () => apiClient.get('/admin/recent-stage'),
+    queryFn: () => apiClient.get<{ data: StageListItem }>('/admin/recent-stage'),
   });
 }
 

@@ -8,13 +8,15 @@ import {
   useUpdatePhase,
   useCreateStage,
   useDeleteStage,
+  useImportFileFromLink,
 } from '@/features/laws/hooks/useLaws';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea, Select } from '@/components/ui/Input';
 import { PhaseBadge } from '@/components/ui/Badge';
-import { PHASE_LABELS, PhaseType, IDEA_AREA_LABELS, IDEA_STATUS_LABELS } from '@/lib/api/types';
-import { ArrowLeft, Plus, Edit, Trash2, Save, ExternalLink, Building2, Calendar, Users, MessageSquare } from 'lucide-react';
+import { PHASE_LABELS, PhaseType, IDEA_AREA_LABELS, IDEA_STATUS_LABELS, RclScrapedStage, RclScrapedProject, RclProjectStage } from '@/lib/api/types';
+import { apiClient } from '@/lib/api/client';
+import { ArrowLeft, Plus, Edit, Trash2, Save, ExternalLink, Building2, Calendar, Users, MessageSquare, Download, Loader2 } from 'lucide-react';
 
 const phaseTypeOptions = Object.entries(PHASE_LABELS).map(([value, label]) => ({
   value,
@@ -32,6 +34,7 @@ export default function AdminPhasePage({
   const updatePhase = useUpdatePhase();
   const createStage = useCreateStage();
   const deleteStage = useDeleteStage();
+  const importFileFromLink = useImportFileFromLink();
 
   const [formData, setFormData] = useState({
     type: 'PRECONSULTATION' as PhaseType,
@@ -46,6 +49,21 @@ export default function AdminPhasePage({
     author: '',
     description: '',
   });
+
+  // RCL import state (single stage)
+  const [rclImportUrl, setRclImportUrl] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [scrapedData, setScrapedData] = useState<RclScrapedStage | null>(null);
+
+  // RCL bulk import state (project)
+  const [rclProjectUrl, setRclProjectUrl] = useState('');
+  const [isScrapingProject, setIsScrapingProject] = useState(false);
+  const [projectError, setProjectError] = useState<string | null>(null);
+  const [scrapedProject, setScrapedProject] = useState<RclScrapedProject | null>(null);
+  const [selectedStages, setSelectedStages] = useState<Set<string>>(new Set());
+  const [isBulkImporting, setIsBulkImporting] = useState(false);
+  const [bulkImportProgress, setBulkImportProgress] = useState<string | null>(null);
 
   useEffect(() => {
     if (phase) {
@@ -78,7 +96,8 @@ export default function AdminPhasePage({
   const handleAddStage = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    await createStage.mutateAsync({
+    // Create the stage and get the new stage ID
+    const newStage = await createStage.mutateAsync({
       lawId,
       phaseId,
       data: {
@@ -86,9 +105,27 @@ export default function AdminPhasePage({
         date: new Date(stageFormData.date).toISOString(),
         author: stageFormData.author || null,
         description: stageFormData.description || null,
-        governmentLinks: [],
+        governmentLinks: scrapedData ? [rclImportUrl] : [],
       },
     });
+
+    // If we have scraped RCL data, import all files
+    if (scrapedData && scrapedData.files.length > 0 && newStage?.id) {
+      for (const file of scrapedData.files) {
+        try {
+          await importFileFromLink.mutateAsync({
+            lawId,
+            phaseId,
+            stageId: newStage.id,
+            url: file.url,
+            name: file.name,
+            stageName: stageFormData.name,
+          });
+        } catch (error) {
+          console.error('Failed to import file:', file.name, error);
+        }
+      }
+    }
 
     setShowStageForm(false);
     setStageFormData({
@@ -97,12 +134,162 @@ export default function AdminPhasePage({
       author: '',
       description: '',
     });
+    // Reset RCL import state
+    setRclImportUrl('');
+    setScrapedData(null);
+    setImportError(null);
   };
 
   const handleDeleteStage = async (stageId: string) => {
     if (confirm('Czy na pewno chcesz usunąć ten etap?')) {
       await deleteStage.mutateAsync({ lawId, phaseId, stageId });
     }
+  };
+
+  // Parse DD-MM-YYYY date to YYYY-MM-DD format
+  const parseRclDate = (dateStr: string | null): string => {
+    if (!dateStr) return new Date().toISOString().split('T')[0];
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return new Date().toISOString().split('T')[0];
+  };
+
+  const handleRclImport = async () => {
+    if (!rclImportUrl) return;
+
+    setIsImporting(true);
+    setImportError(null);
+    setScrapedData(null);
+
+    try {
+      const result = await apiClient.post<RclScrapedStage>('/admin/scrape-rcl-stage', {
+        url: rclImportUrl,
+      });
+
+      setScrapedData(result);
+
+      // Auto-fill the form with scraped data
+      setStageFormData({
+        name: result.stageName,
+        date: parseRclDate(result.lastModified),
+        author: result.files[0]?.author || '',
+        description: result.directories.length > 0
+          ? `Katalogi: ${result.directories.map(d => d.name).join(', ')}`
+          : '',
+      });
+
+      // Show the stage form if not already visible
+      setShowStageForm(true);
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : 'Błąd importu');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // Bulk import handlers
+  const handleScrapeProject = async () => {
+    if (!rclProjectUrl) return;
+
+    setIsScrapingProject(true);
+    setProjectError(null);
+    setScrapedProject(null);
+    setSelectedStages(new Set());
+
+    try {
+      const result = await apiClient.post<RclScrapedProject>('/admin/scrape-rcl-project', {
+        url: rclProjectUrl,
+      });
+      setScrapedProject(result);
+      // Auto-select all active stages with catalog URLs
+      const activeStageIds = new Set(
+        result.stages
+          .filter(s => s.isActive && s.catalogUrl)
+          .map(s => s.stageId!)
+      );
+      setSelectedStages(activeStageIds);
+    } catch (error) {
+      setProjectError(error instanceof Error ? error.message : 'Błąd skanowania projektu');
+    } finally {
+      setIsScrapingProject(false);
+    }
+  };
+
+  const toggleStageSelection = (stageId: string) => {
+    const newSelected = new Set(selectedStages);
+    if (newSelected.has(stageId)) {
+      newSelected.delete(stageId);
+    } else {
+      newSelected.add(stageId);
+    }
+    setSelectedStages(newSelected);
+  };
+
+  const handleBulkImport = async () => {
+    if (!scrapedProject || selectedStages.size === 0) return;
+
+    setIsBulkImporting(true);
+    setBulkImportProgress(null);
+
+    const stagesToImport = scrapedProject.stages.filter(
+      s => s.stageId && selectedStages.has(s.stageId)
+    );
+
+    for (let i = 0; i < stagesToImport.length; i++) {
+      const stage = stagesToImport[i];
+      setBulkImportProgress(`Importowanie ${i + 1}/${stagesToImport.length}: ${stage.stageName}`);
+
+      try {
+        // First scrape the stage details
+        const stageData = await apiClient.post<RclScrapedStage>('/admin/scrape-rcl-stage', {
+          url: stage.catalogUrl,
+        });
+
+        // Create the stage
+        const newStage = await createStage.mutateAsync({
+          lawId,
+          phaseId,
+          data: {
+            name: stageData.stageName,
+            date: new Date(parseRclDate(stageData.lastModified)).toISOString(),
+            author: stageData.files[0]?.author || null,
+            description: stageData.directories.length > 0
+              ? `Katalogi: ${stageData.directories.map(d => d.name).join(', ')}`
+              : null,
+            governmentLinks: [stage.catalogUrl!],
+            order: stage.stageNumber,
+          },
+        });
+
+        // Import all files for this stage
+        if (newStage?.id && stageData.files.length > 0) {
+          for (const file of stageData.files) {
+            try {
+              await importFileFromLink.mutateAsync({
+                lawId,
+                phaseId,
+                stageId: newStage.id,
+                url: file.url,
+                name: file.name,
+                stageName: stageData.stageName,
+              });
+            } catch (fileError) {
+              console.error('Failed to import file:', file.name, fileError);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to import stage:', stage.stageName, error);
+      }
+    }
+
+    setBulkImportProgress(null);
+    setIsBulkImporting(false);
+    setScrapedProject(null);
+    setSelectedStages(new Set());
+    setRclProjectUrl('');
   };
 
   if (isLoading) {
@@ -321,6 +508,163 @@ export default function AdminPhasePage({
           </div>
         </CardHeader>
         <CardContent>
+          {/* RCL Import section - only show for RCL phase */}
+          {phase?.type === 'RCL' && (
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h3 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
+                <Download className="w-4 h-4" />
+                Importuj z RCL
+              </h3>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="https://legislacja.rcl.gov.pl/projekt/.../katalog/...#..."
+                  value={rclImportUrl}
+                  onChange={(e) => setRclImportUrl(e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handleRclImport}
+                  disabled={isImporting || !rclImportUrl}
+                >
+                  {isImporting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Importowanie...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 mr-2" />
+                      Importuj
+                    </>
+                  )}
+                </Button>
+              </div>
+              {importError && (
+                <p className="text-red-600 text-sm mt-2">{importError}</p>
+              )}
+              {scrapedData && (
+                <div className="mt-3 p-3 bg-green-50 rounded border border-green-200">
+                  <p className="text-green-800 text-sm font-medium">
+                    Zaimportowano dane etapu: {scrapedData.stageName}
+                  </p>
+                  <p className="text-green-700 text-xs mt-1">
+                    {scrapedData.files.length} plików, {scrapedData.directories.length} katalogów
+                  </p>
+                </div>
+              )}
+              <p className="text-xs text-blue-700 mt-2">
+                Wklej link do etapu z legislacja.rcl.gov.pl (z hashem #), aby automatycznie wypełnić formularz.
+              </p>
+
+              {/* Bulk import from project */}
+              <div className="mt-4 pt-4 border-t border-blue-200">
+                <h4 className="font-medium text-blue-900 mb-2">Import zbiorczy z projektu RCL</h4>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="https://legislacja.rcl.gov.pl/projekt/12404152/"
+                    value={rclProjectUrl}
+                    onChange={(e) => setRclProjectUrl(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={handleScrapeProject}
+                    disabled={isScrapingProject || !rclProjectUrl}
+                    variant="secondary"
+                  >
+                    {isScrapingProject ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Skanowanie...
+                      </>
+                    ) : (
+                      'Skanuj projekt'
+                    )}
+                  </Button>
+                </div>
+
+                {projectError && (
+                  <p className="text-red-600 text-sm mt-2">{projectError}</p>
+                )}
+
+                {scrapedProject && (
+                  <div className="mt-3 p-3 bg-white rounded border border-blue-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="font-medium text-gray-900">{scrapedProject.projectTitle}</p>
+                        <p className="text-xs text-gray-500">
+                          Projekt #{scrapedProject.projectId} • {scrapedProject.stages.filter(s => s.isActive).length} aktywnych etapów
+                        </p>
+                      </div>
+                      <Button
+                        onClick={handleBulkImport}
+                        disabled={isBulkImporting || selectedStages.size === 0}
+                        size="sm"
+                      >
+                        {isBulkImporting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Importowanie...
+                          </>
+                        ) : (
+                          `Importuj ${selectedStages.size} etapów`
+                        )}
+                      </Button>
+                    </div>
+
+                    {bulkImportProgress && (
+                      <div className="mb-3 p-2 bg-blue-50 rounded text-sm text-blue-800">
+                        <Loader2 className="w-3 h-3 inline-block mr-2 animate-spin" />
+                        {bulkImportProgress}
+                      </div>
+                    )}
+
+                    <div className="space-y-1 max-h-64 overflow-y-auto">
+                      {scrapedProject.stages.map((stage) => (
+                        <div
+                          key={stage.stageNumber}
+                          className={`flex items-center justify-between p-2 rounded ${
+                            stage.isActive && stage.stageId
+                              ? 'bg-green-50 border border-green-200'
+                              : 'bg-gray-50 border border-gray-200 opacity-50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            {stage.isActive && stage.stageId && (
+                              <input
+                                type="checkbox"
+                                checked={selectedStages.has(stage.stageId)}
+                                onChange={() => toggleStageSelection(stage.stageId!)}
+                                className="w-4 h-4 rounded border-gray-300"
+                              />
+                            )}
+                            <div>
+                              <p className={`text-sm ${stage.isActive ? 'font-medium text-gray-900' : 'text-gray-500'}`}>
+                                {stage.stageName}
+                              </p>
+                              {stage.lastModified && (
+                                <p className="text-xs text-gray-500">{stage.lastModified}</p>
+                              )}
+                            </div>
+                          </div>
+                          {!stage.isActive && (
+                            <span className="text-xs text-gray-400">Nieaktywny</span>
+                          )}
+                          {stage.isActive && !stage.stageId && (
+                            <span className="text-xs text-gray-400">Brak katalogu</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-xs text-blue-700 mt-2">
+                  Wklej link do projektu RCL, aby zaimportować wszystkie aktywne etapy jednocześnie.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Add stage form */}
           {showStageForm && (
             <form
@@ -363,9 +707,27 @@ export default function AdminPhasePage({
                   })
                 }
               />
-              <p className="text-sm text-gray-500">
-                Po utworzeniu etapu będziesz mógł dodać PDF ustawy i pliki powiązane.
-              </p>
+              {scrapedData && scrapedData.files.length > 0 ? (
+                <div className="p-3 bg-blue-50 rounded border border-blue-200">
+                  <p className="text-sm text-blue-800 font-medium mb-2">
+                    Pliki do zaimportowania ({scrapedData.files.length}):
+                  </p>
+                  <ul className="text-xs text-blue-700 space-y-1 max-h-32 overflow-y-auto">
+                    {scrapedData.files.map((file, idx) => (
+                      <li key={idx} className="truncate">
+                        • {file.name} {file.author && `(${file.author})`}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-blue-600 mt-2">
+                    Pliki zostaną dostępne do importu po utworzeniu etapu.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Po utworzeniu etapu będziesz mógł dodać PDF ustawy i pliki powiązane.
+                </p>
+              )}
               <div className="flex justify-end space-x-2">
                 <Button
                   type="button"
@@ -374,8 +736,22 @@ export default function AdminPhasePage({
                 >
                   Anuluj
                 </Button>
-                <Button type="submit" disabled={createStage.isPending}>
-                  Dodaj
+                <Button type="submit" disabled={createStage.isPending || importFileFromLink.isPending}>
+                  {createStage.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Tworzenie...
+                    </>
+                  ) : importFileFromLink.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Importowanie plików...
+                    </>
+                  ) : scrapedData && scrapedData.files.length > 0 ? (
+                    `Dodaj i importuj ${scrapedData.files.length} plików`
+                  ) : (
+                    'Dodaj'
+                  )}
                 </Button>
               </div>
             </form>

@@ -213,7 +213,7 @@ export default function HomePage() {
                       <FileText className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <div className="text-2xl font-bold text-gray-900">{recentStageData.data.files?.length || 0}</div>
+                      <div className="text-2xl font-bold text-gray-900">{recentStageData.data._count?.files || 0}</div>
                       <div className="text-xs text-gray-600">Plików</div>
                     </div>
                   </div>
@@ -225,7 +225,7 @@ export default function HomePage() {
                       <MessageSquare className="w-5 h-5 text-purple-600" />
                     </div>
                     <div>
-                      <div className="text-2xl font-bold text-gray-900">{recentStageData.data.discussions?.length || 0}</div>
+                      <div className="text-2xl font-bold text-gray-900">{recentStageData.data._count?.discussions || 0}</div>
                       <div className="text-xs text-gray-600">Komentarzy</div>
                     </div>
                   </div>

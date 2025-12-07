@@ -21,10 +21,11 @@ import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea } from '@/components/ui/Input';
 import { PhaseBadge } from '@/components/ui/Badge';
-import { ArrowLeft, Save, Upload, Trash2, FileText, Plus, X, FileUp, Download, Radar, Sparkles, Eye, EyeOff, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Trash2, FileText, Plus, X, FileUp, Download, Radar, Sparkles, Eye, EyeOff, ExternalLink, Loader2 } from 'lucide-react';
 import { ImpactRadarChart, OverallScoreDisplay, ScoreBadge } from '@/components/ui/ImpactRadarChart';
 import Link from 'next/link';
-import { FILE_TYPE_LABELS } from '@/lib/api/types';
+import { FILE_TYPE_LABELS, RclScrapedStage } from '@/lib/api/types';
+import { apiClient } from '@/lib/api/client';
 import { fetchPhaseName } from '@/lib/utils/phaseName';
 import { fetchLinksFromHtml } from '@/lib/utils/getLinks';
 
@@ -65,6 +66,13 @@ export default function AdminStagePage({
   const [scanningLink, setScanningLink] = useState<string | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const [importingLink, setImportingLink] = useState<string | null>(null);
+
+  // RCL import state
+  const [rclImportUrl, setRclImportUrl] = useState('');
+  const [isRclImporting, setIsRclImporting] = useState(false);
+  const [rclImportError, setRclImportError] = useState<string | null>(null);
+  const [rclScrapedData, setRclScrapedData] = useState<RclScrapedStage | null>(null);
+  const [rclImportingFile, setRclImportingFile] = useState<string | null>(null);
 
   useEffect(() => {
     if (stage) {
@@ -198,6 +206,53 @@ export default function AdminStagePage({
   const handleDeleteLawPdf = async () => {
     if (confirm('Czy na pewno chcesz usunąć PDF ustawy? Usunie to również wyekstrahowaną treść.')) {
       await deleteLawPdf.mutateAsync({ lawId, phaseId, stageId });
+    }
+  };
+
+  // RCL import handlers
+  const handleRclScrape = async () => {
+    if (!rclImportUrl) return;
+
+    setIsRclImporting(true);
+    setRclImportError(null);
+    setRclScrapedData(null);
+
+    try {
+      const result = await apiClient.post<RclScrapedStage>('/admin/scrape-rcl-stage', {
+        url: rclImportUrl,
+      });
+      setRclScrapedData(result);
+    } catch (error) {
+      setRclImportError(error instanceof Error ? error.message : 'Błąd importu');
+    } finally {
+      setIsRclImporting(false);
+    }
+  };
+
+  const handleImportRclFile = async (fileUrl: string, fileName: string) => {
+    try {
+      setRclImportingFile(fileUrl);
+      await importFileFromLink.mutateAsync({
+        lawId,
+        phaseId,
+        stageId,
+        url: fileUrl,
+        name: fileName,
+        stageName: stage?.name,
+      });
+    } catch (error) {
+      console.error(error);
+      alert('Nie udało się dodać pliku z RCL.');
+    } finally {
+      setRclImportingFile(null);
+    }
+  };
+
+  const handleImportAllRclFiles = async () => {
+    if (!rclScrapedData) return;
+
+    for (const file of rclScrapedData.files) {
+      await handleImportRclFile(file.url, file.name);
     }
   };
 
@@ -440,6 +495,113 @@ export default function AdminStagePage({
           )}
         </CardContent>
       </Card>
+
+      {/* RCL Import section - only show for RCL phase */}
+      {phase?.type === 'RCL' && (
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center space-x-2">
+              <Download className="w-5 h-5 text-blue-600" />
+              <h2 className="text-lg font-semibold">Importuj z RCL</h2>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="https://legislacja.rcl.gov.pl/projekt/.../katalog/...#..."
+                  value={rclImportUrl}
+                  onChange={(e) => setRclImportUrl(e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handleRclScrape}
+                  disabled={isRclImporting || !rclImportUrl}
+                >
+                  {isRclImporting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Skanowanie...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 mr-2" />
+                      Skanuj
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {rclImportError && (
+                <p className="text-red-600 text-sm">{rclImportError}</p>
+              )}
+
+              {rclScrapedData && (
+                <div className="border border-green-200 bg-green-50 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="font-medium text-green-900">
+                        {rclScrapedData.stageName}
+                      </p>
+                      <p className="text-xs text-green-700">
+                        {rclScrapedData.files.length} plików, {rclScrapedData.directories.length} katalogów
+                      </p>
+                    </div>
+                    {rclScrapedData.files.length > 0 && (
+                      <Button
+                        size="sm"
+                        onClick={handleImportAllRclFiles}
+                        disabled={!!rclImportingFile}
+                      >
+                        Importuj wszystkie
+                      </Button>
+                    )}
+                  </div>
+
+                  {rclScrapedData.files.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-green-800">Pliki:</p>
+                      {rclScrapedData.files.map((file, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between bg-white rounded px-3 py-2 border border-green-200"
+                        >
+                          <div className="flex-1 min-w-0 mr-2">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {file.name}
+                            </p>
+                            {file.author && (
+                              <p className="text-xs text-gray-500">
+                                {file.author} {file.createdAt && `• ${file.createdAt}`}
+                              </p>
+                            )}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleImportRclFile(file.url, file.name)}
+                            disabled={rclImportingFile === file.url}
+                          >
+                            {rclImportingFile === file.url ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              'Dodaj'
+                            )}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <p className="text-xs text-gray-500">
+                Wklej link do etapu z legislacja.rcl.gov.pl (z hashem #), aby zeskanować i zaimportować pliki.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Files section */}
       <Card>
