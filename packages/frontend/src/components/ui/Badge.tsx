@@ -25,15 +25,22 @@ export function Badge({ children, variant = 'default', className = '' }: BadgePr
   );
 }
 
-const phaseVariants: Record<PhaseType, 'default' | 'success' | 'warning' | 'info' | 'danger'> = {
-  PRECONSULTATION: 'default',
-  RCL: 'info',
-  SEJM: 'warning',
-  SENAT: 'warning',
-  PRESIDENT: 'info',
-  JOURNAL: 'success',
+// Colors matching StageProcessGraph for visual consistency
+const PHASE_BADGE_COLORS: Record<PhaseType, string> = {
+  PRECONSULTATION: 'bg-gradient-to-r from-orange-50 to-orange-100 text-orange-700 ring-1 ring-orange-200',
+  RCL: 'bg-gradient-to-r from-sky-50 to-sky-100 text-sky-700 ring-1 ring-sky-200',
+  SEJM: 'bg-gradient-to-r from-violet-50 to-violet-100 text-violet-700 ring-1 ring-violet-200',
+  SENAT: 'bg-gradient-to-r from-green-50 to-green-100 text-green-700 ring-1 ring-green-200',
+  PRESIDENT: 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 ring-1 ring-blue-200',
+  JOURNAL: 'bg-gradient-to-r from-indigo-50 to-indigo-100 text-indigo-700 ring-1 ring-indigo-200',
 };
 
 export function PhaseBadge({ phase }: { phase: PhaseType }) {
-  return <Badge variant={phaseVariants[phase]}>{PHASE_LABELS[phase]}</Badge>;
+  return (
+    <span
+      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${PHASE_BADGE_COLORS[phase]}`}
+    >
+      {PHASE_LABELS[phase]}
+    </span>
+  );
 }

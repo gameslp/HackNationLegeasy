@@ -21,6 +21,65 @@ const phaseIcons: Record<PhaseType, React.ReactNode> = {
   JOURNAL: <BookOpen className="w-5 h-5" />,
 };
 
+// Colors matching StageProcessGraph for visual consistency
+const PHASE_COLORS: Record<PhaseType, {
+  bg: string;
+  bgLight: string;
+  border: string;
+  text: string;
+  hoverBorder: string;
+  hoverText: string;
+}> = {
+  PRECONSULTATION: {
+    bg: 'bg-orange-500',
+    bgLight: 'from-orange-100 to-orange-50',
+    border: 'border-orange-400',
+    text: 'text-orange-600',
+    hoverBorder: 'hover:border-orange-300',
+    hoverText: 'group-hover:text-orange-600',
+  },
+  RCL: {
+    bg: 'bg-sky-500',
+    bgLight: 'from-sky-100 to-sky-50',
+    border: 'border-sky-400',
+    text: 'text-sky-600',
+    hoverBorder: 'hover:border-sky-300',
+    hoverText: 'group-hover:text-sky-600',
+  },
+  SEJM: {
+    bg: 'bg-violet-500',
+    bgLight: 'from-violet-100 to-violet-50',
+    border: 'border-violet-400',
+    text: 'text-violet-600',
+    hoverBorder: 'hover:border-violet-300',
+    hoverText: 'group-hover:text-violet-600',
+  },
+  SENAT: {
+    bg: 'bg-green-500',
+    bgLight: 'from-green-100 to-green-50',
+    border: 'border-green-400',
+    text: 'text-green-600',
+    hoverBorder: 'hover:border-green-300',
+    hoverText: 'group-hover:text-green-600',
+  },
+  PRESIDENT: {
+    bg: 'bg-blue-500',
+    bgLight: 'from-blue-100 to-blue-50',
+    border: 'border-blue-400',
+    text: 'text-blue-600',
+    hoverBorder: 'hover:border-blue-300',
+    hoverText: 'group-hover:text-blue-600',
+  },
+  JOURNAL: {
+    bg: 'bg-indigo-500',
+    bgLight: 'from-indigo-100 to-indigo-50',
+    border: 'border-indigo-400',
+    text: 'text-indigo-600',
+    hoverBorder: 'hover:border-indigo-300',
+    hoverText: 'group-hover:text-indigo-600',
+  },
+};
+
 interface PhaseTimelineProps {
   phases: Phase[];
   lawId: string;
@@ -68,6 +127,7 @@ export function PhaseTimeline({ phases, lawId }: PhaseTimelineProps) {
         {/* Istniejące fazy */}
         {sortedPhases.map((phase, index) => {
           const isPhaseCompleted = phase.endDate !== null && phase.endDate !== undefined;
+          const colors = PHASE_COLORS[phase.type];
 
           // Sprawdź czy ta sama faza tego typu już wystąpiła wcześniej (np. drugi SEJM)
           const sameTypeBefore = sortedPhases.slice(0, index).filter(p => p.type === phase.type).length;
@@ -78,11 +138,7 @@ export function PhaseTimeline({ phases, lawId }: PhaseTimelineProps) {
           return (
             <div key={phase.id} className="relative flex items-start group">
               <div
-                className={`relative z-10 flex items-center justify-center w-14 h-14 rounded-xl border-2 shadow-md transition-all duration-300 ${
-                  isPhaseCompleted
-                    ? 'bg-gradient-to-br from-green-100 to-emerald-100 border-green-400 text-green-600 shadow-green-200 group-hover:scale-110'
-                    : 'bg-gradient-to-br from-primary-100 to-blue-100 border-primary-400 text-primary-600 shadow-primary-200 group-hover:scale-110'
-                }`}
+                className={`relative z-10 flex items-center justify-center w-14 h-14 rounded-xl border-2 shadow-md transition-all duration-300 bg-gradient-to-br ${colors.bgLight} ${colors.border} ${colors.text} group-hover:scale-110`}
               >
                 {isPhaseCompleted ? (
                   <Check className="w-6 h-6" />
@@ -94,9 +150,9 @@ export function PhaseTimeline({ phases, lawId }: PhaseTimelineProps) {
               <div className="ml-6 flex-1">
                 <Link
                   href={`/laws/${lawId}/phases/${phase.id}`}
-                  className="block p-5 bg-white rounded-xl border border-gray-200 hover:border-primary-300 hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1"
+                  className={`block p-5 bg-white rounded-xl border border-gray-200 ${colors.hoverBorder} hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1`}
                 >
-                  <h3 className="font-bold text-gray-900 text-base group-hover:text-primary-600 transition-colors">
+                  <h3 className={`font-bold text-gray-900 text-base ${colors.hoverText} transition-colors`}>
                     {phaseLabel}
                   </h3>
                   <p className="text-sm text-gray-500 mt-2 font-medium">
@@ -119,22 +175,25 @@ export function PhaseTimeline({ phases, lawId }: PhaseTimelineProps) {
         })}
 
         {/* Przyszłe fazy (nieaktywne) */}
-        {futurePhases.map((phaseType) => (
-          <div key={`future-${phaseType}`} className="relative flex items-start">
-            <div className="relative z-10 flex items-center justify-center w-14 h-14 rounded-xl border-2 shadow-md bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300 text-gray-400">
-              {phaseIcons[phaseType]}
-            </div>
+        {futurePhases.map((phaseType) => {
+          const colors = PHASE_COLORS[phaseType];
+          return (
+            <div key={`future-${phaseType}`} className="relative flex items-start opacity-50">
+              <div className={`relative z-10 flex items-center justify-center w-14 h-14 rounded-xl border-2 shadow-md bg-gradient-to-br ${colors.bgLight} ${colors.border} ${colors.text}`}>
+                {phaseIcons[phaseType]}
+              </div>
 
-            <div className="ml-6 flex-1">
-              <div className="p-5 bg-gray-50/50 rounded-xl border border-gray-100 backdrop-blur-sm">
-                <h3 className="font-semibold text-gray-400">
-                  {PHASE_LABELS[phaseType]}
-                </h3>
-                <p className="text-sm text-gray-400 mt-2">Oczekuje na rozpoczęcie</p>
+              <div className="ml-6 flex-1">
+                <div className="p-5 bg-gray-50/50 rounded-xl border border-gray-200 backdrop-blur-sm">
+                  <h3 className={`font-semibold ${colors.text}`}>
+                    {PHASE_LABELS[phaseType]}
+                  </h3>
+                  <p className="text-sm text-gray-400 mt-2">Oczekuje na rozpoczęcie</p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
