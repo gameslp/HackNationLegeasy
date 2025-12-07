@@ -387,6 +387,37 @@ export function useUploadFile() {
   });
 }
 
+export function useImportFileFromLink() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      lawId,
+      phaseId,
+      stageId,
+      url,
+      name,
+      stageName,
+    }: {
+      lawId: string;
+      phaseId: string;
+      stageId: string;
+      url: string;
+      name?: string;
+      stageName?: string;
+    }) =>
+      apiClient.post<{ stageFile: StageFile; stageName: string | null }>(
+        `/laws/${lawId}/phases/${phaseId}/stages/${stageId}/files/from-link`,
+        { url, name, stageName, fileType: 'RELATED' }
+      ),
+    onSuccess: (_, { lawId, phaseId, stageId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ['stage', lawId, phaseId, stageId],
+      });
+    },
+  });
+}
+
 export function useDeleteFile() {
   const queryClient = useQueryClient();
 

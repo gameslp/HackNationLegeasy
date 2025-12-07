@@ -11,7 +11,7 @@ import {
   deleteLawPdf,
 } from '../controllers/stagesController';
 import { getDiscussions, createDiscussion } from '../controllers/discussionsController';
-import { uploadFile, downloadFile, deleteFile } from '../controllers/filesController';
+import { uploadFile, downloadFile, deleteFile, importFileFromLink } from '../controllers/filesController';
 import { validate } from '../middleware/validate';
 import { upload } from '../middleware/upload';
 import {
@@ -19,6 +19,7 @@ import {
   UpdateStageRequestSchema,
   CreateDiscussionRequestSchema,
   AnalyzeRequestSchema,
+  ImportFileFromLinkRequestSchema,
 } from '@repo/validation';
 
 const router = Router({ mergeParams: true });
@@ -40,6 +41,11 @@ router.delete('/:stageId/law-pdf', deleteLawPdf);
 
 // Files (additional related documents)
 router.post('/:stageId/files', upload.single('file'), uploadFile);
+router.post(
+  '/:stageId/files/from-link',
+  validate(ImportFileFromLinkRequestSchema, 'body'),
+  importFileFromLink
+);
 router.get('/:stageId/files/:fileId', downloadFile);
 router.delete('/:stageId/files/:fileId', deleteFile);
 
