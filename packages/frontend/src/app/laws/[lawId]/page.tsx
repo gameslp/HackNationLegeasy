@@ -5,7 +5,7 @@ import { useLaw } from '@/features/laws/hooks/useLaws';
 import { PhaseTimeline } from '@/features/laws/components/PhaseTimeline';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Calendar, User, ArrowLeft, GitCompare } from 'lucide-react';
+import { Calendar, User, ArrowLeft, GitCompare, Radar } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LawPage({
@@ -68,7 +68,13 @@ export default function LawPage({
               </span>
             )}
           </div>
-          <div className="mt-4">
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link href={`/laws/${lawId}/impact`}>
+              <Button variant="primary">
+                <Radar className="w-4 h-4 mr-2" />
+                Radar Wpływu
+              </Button>
+            </Link>
             <Link href={`/laws/${lawId}/diff`}>
               <Button variant="secondary">
                 <GitCompare className="w-4 h-4 mr-2" />

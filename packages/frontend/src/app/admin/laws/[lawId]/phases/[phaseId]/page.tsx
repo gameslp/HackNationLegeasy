@@ -1,6 +1,7 @@
 'use client';
 
 import { use, useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   useLaw,
   usePhase,
@@ -12,9 +13,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea, Select } from '@/components/ui/Input';
 import { PhaseBadge } from '@/components/ui/Badge';
-import { PHASE_LABELS, PhaseType } from '@/lib/api/types';
-import { ArrowLeft, Plus, Edit, Trash2, Save } from 'lucide-react';
-import Link from 'next/link';
+import { PHASE_LABELS, PhaseType, IDEA_AREA_LABELS, IDEA_STATUS_LABELS } from '@/lib/api/types';
+import { ArrowLeft, Plus, Edit, Trash2, Save, ExternalLink, Building2, Calendar, Users, MessageSquare } from 'lucide-react';
 
 const phaseTypeOptions = Object.entries(PHASE_LABELS).map(([value, label]) => ({
   value,
@@ -113,6 +113,136 @@ export default function AdminPhasePage({
     );
   }
 
+  // Specjalny widok dla fazy PRECONSULTATION z powiązanym pomysłem
+  if (phase?.type === 'PRECONSULTATION' && phase.idea) {
+    const idea = phase.idea;
+    const totalSurveys = idea.surveyResponses?.length || 0;
+    const totalOpinions = idea.opinions?.length || 0;
+
+    return (
+      <div>
+        <Link
+          href={`/admin/laws/${lawId}`}
+          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Wróć do ustawy
+        </Link>
+
+        <div className="mb-6">
+          <div className="flex items-center space-x-2 mb-2">
+            <PhaseBadge phase={phase.type} />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Faza Prekonsultacji</h1>
+          <p className="text-gray-500 mt-1">{law?.name}</p>
+        </div>
+
+        {/* Info o powiązanym pomyśle */}
+        <Card className="mb-6">
+          <CardHeader>
+            <h2 className="text-lg font-semibold">Powiązany pomysł</h2>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-200">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                      {IDEA_AREA_LABELS[idea.area as keyof typeof IDEA_AREA_LABELS]}
+                    </span>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      {IDEA_STATUS_LABELS[idea.status as keyof typeof IDEA_STATUS_LABELS]}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{idea.title}</h3>
+                  <p className="text-gray-600 mb-4">{idea.shortDescription}</p>
+
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <Building2 className="w-4 h-4" />
+                      <span>{idea.ministry}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>{new Date(idea.publishDate).toLocaleDateString('pl-PL')}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Users className="w-4 h-4" />
+                      <span>{totalSurveys} głosów</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MessageSquare className="w-4 h-4" />
+                      <span>{totalOpinions} opinii</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <Link href={`/admin/ideas/${idea.id}`}>
+                  <Button>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edytuj pomysł
+                  </Button>
+                </Link>
+                <Link href={`/ideas/${idea.id}`} target="_blank">
+                  <Button variant="secondary">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Zobacz stronę publiczną
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-800">
+                <strong>Uwaga:</strong> Faza prekonsultacji wykorzystuje dane z panelu pomysłów.
+                Aby edytować treść, pytania, timeline lub załączniki - przejdź do edycji pomysłu.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Dane fazy (tylko daty) */}
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-semibold">Daty fazy</h2>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  label="Data rozpoczęcia"
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, startDate: e.target.value })
+                  }
+                  required
+                />
+                <Input
+                  label="Data zakończenia (opcjonalna)"
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, endDate: e.target.value })
+                  }
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button type="submit" disabled={updatePhase.isPending}>
+                  <Save className="w-4 h-4 mr-2" />
+                  Zapisz zmiany
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Standardowy widok dla innych faz
   return (
     <div>
       <Link

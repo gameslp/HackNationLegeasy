@@ -1,0 +1,239 @@
+Okej, zróbmy z tego porządną „stronę analizy ustawy” – taką, którą można podczepić pod każdy etap (prekonsultacje, RCL, Sejm, Senat itd.).
+
+Poniżej masz plan funkcjonalny + layout tej podstrony, tak jakbym pisał mini-specyfikację dla designera / devów.
+
+1. Gdzie to żyje w systemie?
+
+URL np.:
+
+/acts/[id]/impact – analiza wpływu dla całej ustawy
+
+/acts/[id]/impact?stage=sejm-komisje – analiza dla konkretnego etapu/wersji
+
+Wejścia:
+
+z mapy procesu: przy każdym etapie przycisk „Zobacz Impact Radar dla tej wersji”
+
+z widoku ustawy: zakładka „Analiza wpływu”
+
+2. Ogólny układ strony
+
+Struktura:
+
+Header – wybór etapu + meta informacja
+
+Sekcja A: Impact Radar (główna wizka)
+
+Sekcja B: Skrót w prostym języku („Co to zmienia?”)
+
+Sekcja C: Szczegóły wg kategorii (społeczny/ekonomiczny itd.)
+
+Sekcja D: Porównanie z inną wersją (diff impactu)
+
+Sekcja E: Źródła / OSR / komunikat o AI i wiarygodności
+
+3. Header strony
+
+Elementy:
+
+Nazwa ustawy:
+Ustawa o cyfrowej tożsamości obywateli
+
+Podtytuł:
+Impact Radar – analiza wpływu
+
+Podpis etapu:
+Analizowana wersja: Sejm – komisje (stan na 12.03.2025)
+
+Dropdown / selektor etapu:
+
+Wybierz etap / wersję:
+RCL – projekt v1
+RCL – projekt v2
+Sejm – I czytanie
+Sejm – komisje
+Senat – poprawki
+
+Po zmianie etapu → przeładowanie danych radaru.
+
+4. Sekcja A: Impact Radar (centralny element)
+
+Lewa część ekranu: radar (wykres).
+
+Kategorie (np.):
+
+Ekonomiczny
+
+Społeczny
+
+Administracyjny
+
+Technologiczny / Cyfrowy
+
+Środowiskowy (nawet jeśli większość ustaw ma 1/5, to to też informacja)
+
+Pod spodem mała legenda:
+
+1 – minimalny wpływ
+
+5 – bardzo duży wpływ
+
+Obok/poniżej:
+
+„Ogólny poziom wpływu” – np. 4/5 (wysoki)
+
+„Główna grupa dotknięta zmianą” – np. małe i średnie firmy z sektora IT
+
+„Ocena niepewności” (opcjonalnie) – np. średnia – zależne od aktów wykonawczych
+
+Źródło danych: AI + OSR (jak dostępny).
+
+5. Sekcja B: Skrót w prostym języku
+
+Nagłówek:
+
+Co ta ustawa zmienia w praktyce? (dla zwykłego obywatela)
+
+Krótkie, 3–5 punktów (generowane przez AI z ustawy+uzasadnienia):
+
+„Twoje logowania do usług publicznych będą możliwe jednym profilem cyfrowym.”
+
+„Firmy powyżej 50 pracowników będą musiały wdrożyć dodatkowe zabezpieczenia kont.”
+
+„Seniorzy będą mogli korzystać z uproszczonej wersji logowania przez infolinię / urzędy.”
+
+To jest blok czysto „obywatelski” – super czytelny dla jury.
+
+6. Sekcja C: Szczegóły per kategoria
+
+Układ: 2–3 kafelki w rzędzie, każdy kafelek = jedna kategoria.
+
+Przykład kafelka:
+
+Ekonomiczny (4/5)
+
+Ustawa w istotny sposób wpływa na koszty po stronie firm i administracji.
+
+Korzyści:
+
+uproszczenie logowania → mniej incydentów typu „zgubione hasło”,
+
+w długim terminie niższe koszty utrzymania wielu systemów logowania.
+
+Koszty/ryzyka:
+
+jednorazowe koszty wdrożenia nowych systemów IT,
+
+konieczność szkoleń.
+
+Grupy szczególnie dotknięte:
+
+firmy IT,
+
+dostawcy usług cyfrowych,
+
+ZUS, urzędy skarbowe.
+
+Podobnie dla:
+
+Społeczny (3/5)
+
+Administracyjny (5/5)
+
+Technologiczny (4/5)
+
+Środowiskowy (1/5 – „Brak istotnego wpływu”)
+
+To jest „OSR dla ludzi”: zamiast ściany tekstu – kilka czytelnych bloków.
+
+7. Sekcja D: Porównanie z inną wersją (diff impactu)
+
+Ta sekcja jest opcjonalna, ale bardzo mocna na pokaz:
+
+Nagłówek:
+
+Jak zmienił się wpływ po poprawkach?
+
+UI:
+
+z lewej: selektor „Porównaj z wersją” (np. RCL – projekt v1)
+
+z prawej: mały radar „wersja poprzednia vs aktualna” (dwie linie na wykresie)
+
+Pod spodem tabela zmian:
+
+Obszar	Było (v1)	Jest (v2)	Komentarz AI
+Ekonomiczny	3/5	4/5	„Dodano nowe obowiązki dla MŚP.”
+Społeczny	2/5	3/5	„Wprowadzono dodatkowe prawa dla X.”
+Administracyjny	5/5	5/5	„Bez istotnych zmian.”
+
+To jest dokładnie to, czego nie robi OSR: pokazuje wpływ zmian w procesie.
+
+8. Sekcja E: Źródła i transparentność
+
+Na dole strony:
+
+„Na jakiej podstawie powstał ten radar?”
+
+Lista źródeł:
+
+Projekt ustawy (PDF, link)
+
+Uzasadnienie (PDF, link)
+
+OSR (jeśli jest, link)
+
+Etap: Sejm – komisje, data: 12.03.2025
+
+I ważny tekst dla zaufania:
+
+„Analiza została wygenerowana automatycznie przez model językowy AI i może zawierać uproszczenia.
+Nie zastępuje oficjalnej Oceny Skutków Regulacji (OSR), lecz pomaga obywatelom zrozumieć jej główne wnioski.”
+
+Dla jury to sygnał: świadoma praca z AI, nie „magia”.
+
+9. Flow użytkownika (obywatel)
+
+Wchodzi na stronę ustawy → widzi mapę procesu.
+
+Klik „Zobacz analizę wpływu dla tej wersji” → ląduje na /impact.
+
+W ciągu 5 sekund widzi:
+
+radar,
+
+prosty opis „co to zmienia”,
+
+rozwijane detale,
+
+możliwość porównania wersji.
+
+To jest „wow, pierwszy raz rozumiem ustawę”.
+
+10. Flow użytkownika (urzędnik)
+
+W panelu admina wybiera:
+
+etap,
+
+wersję dokumentu (np. projekt_v3.pdf).
+
+Klika: „Generuj Impact Radar”.
+
+Backend:
+
+wyciąga tekst,
+
+wysyła do LLM,
+
+zapisuje wyniki (JSON),
+
+oznacza, że ta wersja ma już radar.
+
+Urzędnik może ręcznie:
+
+skorygować oceny (np. 3→4),
+
+dopisać komentarze.
+
+Po zapisaniu – obywatel widzi finalny radar.

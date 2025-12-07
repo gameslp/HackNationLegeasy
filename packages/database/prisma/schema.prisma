@@ -20,6 +20,7 @@ model Law {
   updatedAt   DateTime  @updatedAt
 
   phases Phase[]
+  idea   Idea?    // Powiązany pomysł z Etapu 0 (jeśli ustawa powstała z prekonsultacji)
 
   @@index([name])
   @@index([author])
@@ -45,6 +46,10 @@ model Phase {
   endDate   DateTime?
   order     Int       // Kolejność fazy w procesie
   createdAt DateTime  @default(now())
+
+  // Powiązanie z pomysłem (dla fazy PRECONSULTATION)
+  ideaId    String?   @unique
+  idea      Idea?     @relation(fields: [ideaId], references: [id])
 
   law    Law     @relation(fields: [lawId], references: [id], onDelete: Cascade)
   stages Stage[]
@@ -80,9 +85,10 @@ model Stage {
   order           Int      // Kolejność etapu w fazie
   createdAt       DateTime @default(now())
 
-  phase       Phase        @relation(fields: [phaseId], references: [id], onDelete: Cascade)
-  files       StageFile[]  // Pliki powiązane (dodatkowe dokumenty)
-  discussions Discussion[]
+  phase          Phase           @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  files          StageFile[]     // Pliki powiązane (dodatkowe dokumenty)
+  discussions    Discussion[]
+  impactAnalysis ImpactAnalysis? // Analiza wpływu
 
   @@index([phaseId])
   @@index([date])
@@ -117,4 +123,247 @@ model Discussion {
 
   @@index([stageId])
   @@index([createdAt])
+}
+
+// ==========================================
+// ETAP 0 - PREKONSULTACJE (Pomysły ustaw)
+// ==========================================
+
+// Obszar tematyczny pomysłu
+enum IdeaArea {
+  DIGITALIZATION   // Cyfryzacja
+  HEALTH           // Zdrowie
+  EDUCATION        // Edukacja
+  TRANSPORT        // Transport
+  ENVIRONMENT      // Środowisko
+  TAXES            // Podatki
+  SECURITY         // Bezpieczeństwo
+  SOCIAL           // Polityka społeczna
+  ECONOMY          // Gospodarka
+  OTHER            // Inne
+}
+
+// Status pomysłu
+enum IdeaStatus {
+  NEW              // Nowy - właśnie opublikowany
+  COLLECTING       // Zbieramy opinie
+  SUMMARIZING      // Podsumowujemy
+  CLOSED           // Zamknięty - decyzja podjęta
+  ARCHIVED         // Zarchiwizowany (nie stał się ustawą)
+  CONVERTED        // Przekształcony w ustawę
+}
+
+// Etap pomysłu (w ramach Etapu 0)
+enum IdeaStage {
+  IDEA             // Pomysł
+  CONCEPT          // Wstępna koncepcja
+  ASSUMPTIONS      // Projekt założeń
+}
+
+// Typ respondenta
+enum RespondentType {
+  CITIZEN      // Osoba prywatna
+  NGO          // Organizacja pozarządowa
+  COMPANY      // Firma
+  EXPERT       // Ekspert
+}
+
+// Pomysł ustawy (Etap 0)
+model Idea {
+  id                String      @id @default(cuid())
+  title             String      @db.VarChar(500)
+  shortDescription  String      @db.Text          // Prosty język dla obywateli
+  ministry          String      @db.VarChar(255)  // Ministerstwo odpowiedzialne
+  area              IdeaArea
+  status            IdeaStatus  @default(NEW)
+  stage             IdeaStage   @default(IDEA)
+
+  // Problem i rozwiązania
+  problemDescription String     @db.Text          // "Problem dziś"
+  proposedSolutions  Json       @default("[]")    // Lista kierunków rozwiązań
+
+  // Daty
+  publishDate       DateTime    @default(now())
+  opinionDeadline   DateTime?                     // Termin zgłaszania opinii
+  closedDate        DateTime?
+
+  // Powód zamknięcia (jeśli nie stał się ustawą)
+  closureReason     String?     @db.Text
+
+  // Powiązanie z ustawą (jeśli przekształcony)
+  lawId             String?     @unique
+  law               Law?        @relation(fields: [lawId], references: [id])
+
+  // AI podsumowanie
+  aiSummary         String?     @db.Text
+  aiSummaryDate     DateTime?
+  aiSummaryPublic   Boolean     @default(false)  // Czy podsumowanie jest publiczne
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  opinions          IdeaOpinion[]
+  surveyResponses   IdeaSurveyResponse[]
+  questions         IdeaQuestion[]
+  timeline          IdeaTimelineEvent[]
+  attachments       IdeaAttachment[]
+  lawPhase          Phase?             // Faza powiązana (gdy przekształcony w ustawę)
+
+  @@index([area])
+  @@index([status])
+  @@index([publishDate])
+  @@index([opinionDeadline])
+}
+
+// Pytanie do obywateli (konfigurowalne przez urzędnika)
+model IdeaQuestion {
+  id        String   @id @default(cuid())
+  ideaId    String
+  question  String   @db.Text
+  order     Int
+  required  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  answers   IdeaQuestionAnswer[]
+
+  @@index([ideaId])
+}
+
+// Odpowiedź na pytanie otwarte
+model IdeaQuestionAnswer {
+  id         String   @id @default(cuid())
+  questionId String
+  opinionId  String
+  answer     String   @db.Text
+  createdAt  DateTime @default(now())
+
+  question   IdeaQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  opinion    IdeaOpinion  @relation(fields: [opinionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+  @@index([opinionId])
+}
+
+// Opinia obywatela (odpowiedzi na pytania otwarte + załączniki)
+model IdeaOpinion {
+  id             String         @id @default(cuid())
+  ideaId         String
+  firstName      String         @db.VarChar(100)
+  lastName       String         @db.VarChar(100)
+  email          String         @db.VarChar(255)
+  respondentType RespondentType @default(CITIZEN)
+  organization   String?        @db.VarChar(255)  // Nazwa organizacji/firmy
+
+  // Załącznik (stanowisko PDF)
+  attachmentPath String?        @db.VarChar(1000)
+  attachmentName String?        @db.VarChar(500)
+
+  createdAt      DateTime       @default(now())
+
+  idea           Idea           @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  answers        IdeaQuestionAnswer[]
+
+  @@index([ideaId])
+  @@index([respondentType])
+  @@index([createdAt])
+}
+
+// Odpowiedź na ankietę (szybka - 1 klik)
+model IdeaSurveyResponse {
+  id           String   @id @default(cuid())
+  ideaId       String
+
+  // Dane respondenta
+  firstName    String   @db.VarChar(100)
+  lastName     String   @db.VarChar(100)
+  email        String   @db.VarChar(255)
+
+  // Czy popierasz kierunek zmian? (1=Nie, 2=Raczej nie, 3=Raczej tak, 4=Tak)
+  support      Int
+
+  // Na ile temat jest ważny? (1-5)
+  importance   Int
+
+  createdAt    DateTime @default(now())
+
+  idea         Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@index([ideaId])
+  @@index([createdAt])
+}
+
+// Timeline Etapu 0
+model IdeaTimelineEvent {
+  id          String   @id @default(cuid())
+  ideaId      String
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  date        DateTime
+  order       Int
+  createdAt   DateTime @default(now())
+
+  idea        Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@index([ideaId])
+  @@index([date])
+}
+
+// Załączniki do pomysłu (dokumenty od ministerstwa)
+model IdeaAttachment {
+  id        String   @id @default(cuid())
+  ideaId    String
+  fileName  String   @db.VarChar(500)
+  filePath  String   @db.VarChar(1000)
+  mimeType  String   @db.VarChar(100)
+  size      Int
+  createdAt DateTime @default(now())
+
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@index([ideaId])
+}
+
+// ==========================================
+// IMPACT RADAR - Analiza wpływu ustawy
+// ==========================================
+
+// Analiza wpływu powiązana z etapem
+model ImpactAnalysis {
+  id        String   @id @default(cuid())
+  stageId   String   @unique
+
+  // Oceny wpływu (1-5)
+  economicScore       Int      @default(1)  // Ekonomiczny
+  socialScore         Int      @default(1)  // Społeczny
+  administrativeScore Int      @default(1)  // Administracyjny
+  technologicalScore  Int      @default(1)  // Technologiczny/Cyfrowy
+  environmentalScore  Int      @default(1)  // Środowiskowy
+
+  // Ogólne podsumowanie
+  overallScore        Int      @default(1)  // Ogólny poziom wpływu (1-5)
+  mainAffectedGroup   String?  @db.VarChar(500)  // Główna grupa dotknięta zmianą
+  uncertaintyLevel    String?  @db.VarChar(100)  // niska/średnia/wysoka
+
+  // Prosty opis dla obywateli
+  simpleSummary       Json     @default("[]")  // Array of strings - "Co to zmienia?"
+
+  // Szczegóły per kategoria (JSON z korzyściami, kosztami, grupami)
+  economicDetails       Json?  // { benefits: [], costs: [], affectedGroups: [], description: string }
+  socialDetails         Json?
+  administrativeDetails Json?
+  technologicalDetails  Json?
+  environmentalDetails  Json?
+
+  // Metadane
+  generatedAt   DateTime  @default(now())
+  isPublished   Boolean   @default(false)  // Czy widoczne publicznie
+  editedByAdmin Boolean   @default(false)  // Czy edytowane ręcznie
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  stage         Stage     @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@index([stageId])
 }

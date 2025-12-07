@@ -11,11 +11,17 @@ import {
   useUploadLawPdf,
   useDeleteLawPdf,
 } from '@/features/laws/hooks/useLaws';
+import {
+  useAdminStageImpact,
+  useGenerateImpact,
+  useToggleImpactPublish,
+} from '@/features/laws/hooks/useImpact';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea } from '@/components/ui/Input';
 import { PhaseBadge } from '@/components/ui/Badge';
-import { ArrowLeft, Save, Upload, Trash2, FileText, Plus, X, FileUp, Download } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Trash2, FileText, Plus, X, FileUp, Download, Radar, Sparkles, Eye, EyeOff, ExternalLink } from 'lucide-react';
+import { ImpactRadarChart, OverallScoreDisplay, ScoreBadge } from '@/components/ui/ImpactRadarChart';
 import Link from 'next/link';
 import { FILE_TYPE_LABELS } from '@/lib/api/types';
 
@@ -33,6 +39,11 @@ export default function AdminStagePage({
   const deleteFile = useDeleteFile();
   const uploadLawPdf = useUploadLawPdf();
   const deleteLawPdf = useDeleteLawPdf();
+
+  // Impact Analysis hooks
+  const { data: impactData, isLoading: impactLoading } = useAdminStageImpact(stageId);
+  const generateImpact = useGenerateImpact();
+  const togglePublish = useToggleImpactPublish();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lawPdfInputRef = useRef<HTMLInputElement>(null);
@@ -400,6 +411,156 @@ export default function AdminStagePage({
             <p className="text-gray-500 text-center py-4">
               Brak plików. Dodaj pliki używając formularza powyżej.
             </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Impact Analysis section */}
+      <Card className="mt-8">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Radar className="w-5 h-5 text-primary-600" />
+              <h2 className="text-lg font-semibold">Analiza Wpływu (Impact Radar)</h2>
+            </div>
+            {impactData?.analysis && (
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant={impactData.analysis.isPublished ? 'secondary' : 'primary'}
+                  size="sm"
+                  onClick={() =>
+                    togglePublish.mutate({
+                      stageId,
+                      isPublished: !impactData.analysis!.isPublished,
+                    })
+                  }
+                  disabled={togglePublish.isPending}
+                >
+                  {impactData.analysis.isPublished ? (
+                    <>
+                      <EyeOff className="w-4 h-4 mr-2" />
+                      Ukryj
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-4 h-4 mr-2" />
+                      Opublikuj
+                    </>
+                  )}
+                </Button>
+                <Link href={`/laws/${lawId}/impact`} target="_blank">
+                  <Button variant="ghost" size="sm">
+                    <ExternalLink className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {impactLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+            </div>
+          ) : impactData?.analysis ? (
+            <div className="space-y-6">
+              {/* Status badge */}
+              <div className="flex items-center space-x-2">
+                {impactData.analysis.isPublished ? (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <Eye className="w-3 h-3 mr-1" />
+                    Opublikowana
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <EyeOff className="w-3 h-3 mr-1" />
+                    Nieopublikowana
+                  </span>
+                )}
+                {impactData.analysis.editedByAdmin && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Edytowana
+                  </span>
+                )}
+              </div>
+
+              {/* Radar chart and scores */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <ImpactRadarChart analysis={impactData.analysis} height={300} />
+                </div>
+                <div>
+                  <OverallScoreDisplay
+                    score={impactData.analysis.overallScore}
+                    mainAffectedGroup={impactData.analysis.mainAffectedGroup}
+                    uncertaintyLevel={impactData.analysis.uncertaintyLevel}
+                  />
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <ScoreBadge score={impactData.analysis.economicScore} label="Ekon." size="sm" />
+                    <ScoreBadge score={impactData.analysis.socialScore} label="Społ." size="sm" />
+                    <ScoreBadge score={impactData.analysis.administrativeScore} label="Admin." size="sm" />
+                    <ScoreBadge score={impactData.analysis.technologicalScore} label="Tech." size="sm" />
+                    <ScoreBadge score={impactData.analysis.environmentalScore} label="Środ." size="sm" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Simple summary */}
+              {impactData.analysis.simpleSummary.length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-amber-900 mb-2">Co to zmienia?</h3>
+                  <ul className="space-y-1">
+                    {impactData.analysis.simpleSummary.map((item: string, i: number) => (
+                      <li key={i} className="text-sm text-amber-800">
+                        {i + 1}. {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Regenerate button */}
+              <div className="flex justify-end pt-4 border-t border-gray-200">
+                <Button
+                  variant="secondary"
+                  onClick={() => generateImpact.mutate(stageId)}
+                  disabled={generateImpact.isPending}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  {generateImpact.isPending ? 'Generowanie...' : 'Wygeneruj ponownie'}
+                </Button>
+              </div>
+
+              <p className="text-xs text-gray-500 text-right">
+                Wygenerowano:{' '}
+                {new Date(impactData.analysis.generatedAt).toLocaleDateString('pl-PL', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </p>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Radar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 mb-4">
+                Analiza wpływu nie została jeszcze wygenerowana dla tego etapu.
+              </p>
+              {!stage?.lawTextContent && (
+                <p className="text-sm text-amber-600 mb-4">
+                  Aby wygenerować analizę, najpierw prześlij PDF ustawy.
+                </p>
+              )}
+              <Button
+                onClick={() => generateImpact.mutate(stageId)}
+                disabled={generateImpact.isPending}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {generateImpact.isPending ? 'Generowanie...' : 'Wygeneruj analizę AI'}
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>

@@ -1,0 +1,239 @@
+1. Widok główny Etapu 0 – „Pomysły ustaw w przygotowaniu”
+Nazwa sekcji
+
+Na stronie głównej:
+
+„Pomysły nowych regulacji – Etap 0: Prekonsultacje”
+„Tu możesz wypowiedzieć się, zanim powstanie projekt ustawy.”
+
+Layout
+
+U góry: pasek filtrów
+Poniżej: tabela / lista kafelków.
+
+Filtry (bardzo ważne)
+
+Obszar: Cyfryzacja · Zdrowie · Edukacja · Transport · Środowisko · Podatki …
+
+Status: Nowy · Zbieramy opinie · Podsumowujemy · Zamknięty
+
+Etap: Pomysł · Wstępna koncepcja · Projekt założeń
+
+Czas: Niedawno dodane · Kończy się etap opiniowania wkrótce
+
+Kolumny w tabeli
+
+Przykład:
+
+Tytuł pomysłu	Obszar	Etap	Termin zgłaszania opinii	Liczba opinii	Status
+Ustawa o cyfrowej tożsamości	Cyfryzacja	„Zbieramy opinie”	25.03.2025	137	🟢 otwarty
+Zmiany w prawie drogowym	Transport	„Podsumowujemy”	zakończone	89	🟡 analiza
+Ochrona danych uczniów	Edukacja	„Nowy pomysł”	10.04.2025	12	🟢 otwarty
+
+Kliknięcie w wiersz/kafelek → widok szczegółowy pomysłu.
+
+2. Widok jednego pomysłu – centrum Etapu 0
+
+To jest najważniejszy ekran Etapu 0. Zrób go jak „landing page pomysłu”.
+
+Sekcja 1: Nagłówek
+
+Tytuł: „Ustawa o cyfrowej tożsamości obywateli – PREKONSULTACJE”
+
+Krótki opis w prostym języku:
+
+„Chcemy ułatwić logowanie się do usług publicznych i komercyjnych jednym bezpiecznym identyfikatorem cyfrowym.”
+
+Obok:
+
+Ministerstwo: Cyfryzacji
+
+Status: 🟢 Zbieramy opinie do 25.03.2025
+
+Etap: „koncepcja, zanim powstanie projekt ustawy”
+
+Sekcja 2: Co chcemy zmienić? (dla obywatela)
+
+Dwa bloki:
+
+Problem dziś
+Krótki opis np.:
+
+„Obecnie każdy system ma osobne loginy, co jest niewygodne i mało bezpieczne.”
+
+Co rozważamy?
+Lista 3–5 pomysłów / kierunków:
+
+wprowadzenie jednego cyfrowego identyfikatora,
+
+spójne zasady bezpieczeństwa,
+
+dostęp dla osób 60+ w prostszej formie.
+
+Tu można wykorzystać AI do wygładzania języka.
+
+Sekcja 3: „Jak możesz się wypowiedzieć?” – moduł partycypacji
+
+3 poziomy:
+
+Szybka ankieta (1 klik)
+
+„Czy popierasz kierunek zmian?” – Tak / Raczej tak / Raczej nie / Nie
+
+„Na ile ten temat jest dla Ciebie ważny?” – skala 1–5
+
+Pytania otwarte
+Formularz z 2–3 pytaniami:
+
+„Jakie widzisz korzyści / zagrożenia?”
+
+„Czy są grupy, które szczególnie trzeba uwzględnić (np. seniorzy, przedsiębiorcy)?”
+
+„Czy masz propozycje konkretnych rozwiązań?”
+
+Załączniki / uwagi eksperckie (dla NGO, firm, ekspertów)
+
+opcja wgrania PDF / linku do stanowiska,
+
+zaznaczenie „Jestem: organizacją pozarządową / firmą / osobą prywatną / ekspertem”.
+
+Sekcja 4: „Jakie opinie już zebraliśmy?” – transparentność
+
+licznik: 137 opinii obywateli, 9 NGO, 4 firmy
+
+wykres słupkowy / donut:
+
+70% „popiera kierunek”,
+
+20% „ma zastrzeżenia”,
+
+10% „przeciw”.
+
+lista zagregowanych wniosków (tu idealnie wchodzi AI):
+
+„Najczęściej powtarzające się obawy:”
+• bezpieczeństwo danych
+• wykluczenie osób starszych
+
+„Najczęściej wskazywane korzyści:”
+• jedno logowanie do wszystkich usług
+• mniej haseł i loginów
+
+Ten moduł robi ogromne wrażenie – pokazuje, że głos obywateli naprawdę jest zbierany i analizowany.
+
+Sekcja 5: Status procesu i timeline Etapu 0
+
+Prosty timeline tylko dla pre-konsultacji:
+
+01.03 – pomysł opublikowany
+
+01–25.03 – zbieranie opinii
+
+26–31.03 – analiza i podsumowanie
+
+02.04 – decyzja: czy tworzymy projekt ustawy?
+
+Tu widać, że to etap „przedustawowy”.
+
+3. Flow urzędnika + przejście z Etapu 0 do „ustawy na schemacie”
+A. Flow urzędnika na Etapie 0
+
+Dodanie nowego pomysłu
+
+tytuł,
+
+ministerstwo,
+
+opis problemu,
+
+wstępne kierunki rozwiązań,
+
+daty: start i koniec zbierania opinii,
+
+tagi (obszar: cyfryzacja/podatki itd.).
+
+Konfiguracja sposobu konsultacji
+
+pytania do obywateli (zamknięte + otwarte),
+
+info, czy przyjmuje stanowiska PDF od NGO, itd.
+
+Monitoring
+
+panel z liczbą odpowiedzi,
+
+podziałem na typy użytkowników,
+
+AI podsumowaniem „na żywo”.
+
+Zamknięcie Etapu 0
+
+po zakończeniu zbierania opinii – klik „Zamknij prekonsultacje, wygeneruj podsumowanie”.
+
+AI generuje raport z konsultacji:
+
+najważniejsze wnioski,
+
+ryzyka,
+
+rekomendacje (to może być półprodukt do OSR).
+
+Decyzja: tworzymy projekt ustawy?
+
+Jeśli TAK:
+
+urzędnik klika „Rozpocznij etap legislacyjny”.
+
+system tworzy nowy projekt ustawy w Waszym lokalnym gicie,
+
+podpięty jest raport z prekonsultacji,
+
+ustawa pojawia się na Waszej mapie procesu jako etap „RCL – projekt”.
+
+Jeśli NIE:
+
+pomysł przechodzi do sekcji „Zakończone / archiwalne pomysły”,
+
+nadal jest widoczny dla obywateli z info:
+
+„Po analizie opinii zdecydowano o niewprowadzaniu ustawy w obecnym kształcie.”
+
+To jest bardzo ważne – pokazuje szacunek do obywateli i transparentność.
+
+4. Jak to łączy się z następnymi etapami (schematem ustawy)
+
+Dla obywatela:
+
+Na karcie pomysłu, po przejściu do etapu formalnego, pojawia się duży przycisk:
+
+„Ten pomysł stał się projektem ustawy – zobacz, na jakim etapie jest teraz”
+
+→ klik przenosi go na Waszą mapę procesu legislacyjnego (Etap 1+).
+
+W mapie przy ustawie można dodać sekcję:
+
+„Ta ustawa przeszła prekonsultacje – zobacz, co mówili obywatele na Etapie 0”
+
+→ link do archiwalnej strony pomysłu.
+
+Dla urzędnika:
+
+raport z prekonsultacji staje się pierwszym załącznikiem w repo ustawy (idealny input do OSR).
+
+5. Co koniecznie podkreślić w prezentacji
+
+Hasło przewodnie Etapu 0:
+
+„Zanim powstanie ustawa, powstaje rozmowa.”
+
+Albo bardziej urzędowo:
+
+„Etap 0 – publiczna tablica pomysłów, w której każdy obywatel może wypowiedzieć się, zanim w ogóle powstanie projekt ustawy”.
+
+I trzy bulletpointy:
+
+centralna lista pomysłów w prekonsultacjach,
+
+proste narzędzia wypowiedzi dla obywateli (ankieta + opinie),
+
+AI, które streszcza tysiące opinii i robi z nich raport dla urzędników.

@@ -2,6 +2,7 @@
 
 import { use, useState, useMemo } from 'react';
 import { useLaw, usePhase, useStage, useAnalyze, useAllStages, useDiff } from '@/features/laws/hooks/useLaws';
+import { useStageImpact } from '@/features/laws/hooks/useImpact';
 import { DiscussionSection } from '@/features/laws/components/DiscussionSection';
 import { PhaseBadge } from '@/components/ui/Badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
@@ -18,9 +19,20 @@ import {
   GitCompare,
   Plus,
   Minus,
+  Users,
+  MessageSquare,
+  ThumbsUp,
+  ThumbsDown,
+  Star,
+  Lightbulb,
+  Building2,
+  Radar,
 } from 'lucide-react';
+import { ImpactRadarChart, OverallScoreDisplay, ScoreBadge } from '@/components/ui/ImpactRadarChart';
+import { PDFViewer } from '@/components/ui/PDFViewer';
 import Link from 'next/link';
-import { FILE_TYPE_LABELS, PHASE_LABELS } from '@/lib/api/types';
+import Markdown from 'react-markdown';
+import { FILE_TYPE_LABELS, PHASE_LABELS, IDEA_AREA_LABELS, RESPONDENT_TYPE_LABELS, SUPPORT_LABELS, IdeaArea, RespondentType } from '@/lib/api/types';
 
 export default function StagePage({
   params,
@@ -32,6 +44,7 @@ export default function StagePage({
   const { data: phase } = usePhase(lawId, phaseId);
   const { data: stage, isLoading, error } = useStage(lawId, phaseId, stageId);
   const { data: allStagesData } = useAllStages(lawId);
+  const { data: impactData } = useStageImpact(stageId);
   const analyze = useAnalyze();
   const [analysisResult, setAnalysisResult] = useState<{
     summary: string;
@@ -125,7 +138,9 @@ export default function StagePage({
           <p className="text-sm text-gray-500 mb-4">{law?.name}</p>
 
           {stage.description && (
-            <p className="text-gray-600 mb-4">{stage.description}</p>
+            <div className="prose prose-sm max-w-none text-gray-600 mb-4">
+              <Markdown>{stage.description}</Markdown>
+            </div>
           )}
 
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
@@ -189,9 +204,272 @@ export default function StagePage({
                 {showDiff ? 'Ukryj zmiany' : 'Pokaż zmiany'}
               </Button>
             )}
+
+            {/* Impact Radar link - only if analysis exists and is published */}
+            {impactData?.analysis && (
+              <Link href={`/laws/${lawId}/impact`}>
+                <Button variant="primary">
+                  <Radar className="w-4 h-4 mr-2" />
+                  Radar Wpływu
+                </Button>
+              </Link>
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Impact Analysis Summary - if published */}
+      {impactData?.analysis && (
+        <Card className="border-primary-200 bg-gradient-to-br from-primary-50 to-blue-50">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Radar className="w-5 h-5 text-primary-600" />
+                <h3 className="text-lg font-semibold">Analiza Wpływu</h3>
+              </div>
+              <Link href={`/laws/${lawId}/impact`}>
+                <Button variant="secondary" size="sm">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Pełna analiza
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left - Radar Chart */}
+              <div className="flex items-center justify-center">
+                <ImpactRadarChart analysis={impactData.analysis} height={250} />
+              </div>
+
+              {/* Right - Summary */}
+              <div className="space-y-4">
+                <OverallScoreDisplay
+                  score={impactData.analysis.overallScore}
+                  mainAffectedGroup={impactData.analysis.mainAffectedGroup}
+                  uncertaintyLevel={impactData.analysis.uncertaintyLevel}
+                />
+
+                {/* Simple Summary */}
+                {impactData.analysis.simpleSummary.length > 0 && (
+                  <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <h4 className="font-semibold text-gray-900 mb-2">Co to zmienia?</h4>
+                    <ul className="space-y-1">
+                      {impactData.analysis.simpleSummary.slice(0, 3).map((item: string, i: number) => (
+                        <li key={i} className="text-sm text-gray-600 flex items-start">
+                          <span className="text-primary-500 mr-2 font-bold">{i + 1}.</span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* PRECONSULTATION - Specjalny widok danych z pomysłu */}
+      {phase?.type === 'PRECONSULTATION' && stage.idea && (
+        <div className="space-y-6">
+          {/* Statystyki prekonsultacji */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center space-x-2">
+                <Lightbulb className="w-5 h-5 text-amber-500" />
+                <h3 className="text-lg font-semibold">Wyniki prekonsultacji</h3>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                {/* Statystyka: Głosy */}
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-5 h-5 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-700">Głosy w ankiecie</span>
+                  </div>
+                  <p className="text-2xl font-bold text-blue-900">{stage.idea.surveyResponses?.length || 0}</p>
+                </div>
+
+                {/* Statystyka: Opinie */}
+                <div className="bg-purple-50 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageSquare className="w-5 h-5 text-purple-600" />
+                    <span className="text-sm font-medium text-purple-700">Szczegółowe opinie</span>
+                  </div>
+                  <p className="text-2xl font-bold text-purple-900">{stage.idea.opinions?.length || 0}</p>
+                </div>
+
+                {/* Statystyka: Poparcie */}
+                {stage.idea.surveyResponses && stage.idea.surveyResponses.length > 0 && (() => {
+                  const forVotes = stage.idea.surveyResponses.filter((r: { support: number }) => r.support >= 3).length;
+                  const total = stage.idea.surveyResponses.length;
+                  const supportPercent = Math.round((forVotes / total) * 100);
+                  return (
+                    <div className="bg-green-50 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <ThumbsUp className="w-5 h-5 text-green-600" />
+                        <span className="text-sm font-medium text-green-700">Poparcie</span>
+                      </div>
+                      <p className="text-2xl font-bold text-green-900">{supportPercent}%</p>
+                    </div>
+                  );
+                })()}
+
+                {/* Statystyka: Ważność */}
+                {stage.idea.surveyResponses && stage.idea.surveyResponses.length > 0 && (() => {
+                  const avgImportance = stage.idea.surveyResponses.reduce((sum: number, r: { importance: number }) => sum + r.importance, 0) / stage.idea.surveyResponses.length;
+                  return (
+                    <div className="bg-amber-50 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Star className="w-5 h-5 text-amber-600" />
+                        <span className="text-sm font-medium text-amber-700">Śr. ważność</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <Star
+                            key={i}
+                            className={`w-5 h-5 ${
+                              i <= Math.round(avgImportance)
+                                ? 'text-amber-500 fill-amber-500'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Informacje o pomyśle */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Building2 className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">Ministerstwo</span>
+                  </div>
+                  <p className="text-gray-900">{stage.idea.ministry}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Lightbulb className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">Obszar</span>
+                  </div>
+                  <p className="text-gray-900">{IDEA_AREA_LABELS[stage.idea.area as IdeaArea]}</p>
+                </div>
+              </div>
+
+              {/* Problem i rozwiązania */}
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Problem</h4>
+                  <p className="text-gray-600 bg-gray-50 p-3 rounded-lg">{stage.idea.problemDescription}</p>
+                </div>
+
+                {stage.idea.proposedSolutions && (stage.idea.proposedSolutions as string[]).length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Proponowane kierunki rozwiązań</h4>
+                    <ul className="list-disc list-inside text-gray-600 space-y-1 bg-gray-50 p-3 rounded-lg">
+                      {(stage.idea.proposedSolutions as string[]).map((solution, i) => (
+                        <li key={i}>{solution}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Opinie według typu respondenta */}
+          {stage.idea.opinions && stage.idea.opinions.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <MessageSquare className="w-5 h-5 text-primary-600" />
+                  <h3 className="text-lg font-semibold">Opinie według typu respondenta</h3>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Object.entries(
+                    (stage.idea.opinions as Array<{ respondentType: string }>).reduce((acc: Record<string, number>, op) => {
+                      acc[op.respondentType] = (acc[op.respondentType] || 0) + 1;
+                      return acc;
+                    }, {})
+                  ).map(([type, count]) => (
+                    <div key={type} className="text-center p-3 bg-gray-50 rounded-lg">
+                      <p className="text-2xl font-bold text-gray-900">{count as number}</p>
+                      <p className="text-sm text-gray-600">{RESPONDENT_TYPE_LABELS[type as RespondentType]}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Timeline z pomysłu */}
+          {stage.idea.timeline && stage.idea.timeline.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <Calendar className="w-5 h-5 text-primary-600" />
+                  <h3 className="text-lg font-semibold">Przebieg prekonsultacji</h3>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="relative">
+                  <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200" />
+                  <div className="space-y-4">
+                    {(stage.idea.timeline as Array<{ id: string; title: string; date: string; description?: string }>).map((event, index) => (
+                      <div key={event.id} className="relative flex gap-4">
+                        <div
+                          className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center ${
+                            index === stage.idea!.timeline.length - 1
+                              ? 'bg-amber-500 text-white'
+                              : 'bg-white border-2 border-gray-300 text-gray-500'
+                          }`}
+                        >
+                          <Calendar className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 pb-4">
+                          <p className="text-sm text-gray-500">
+                            {new Date(event.date).toLocaleDateString('pl-PL')}
+                          </p>
+                          <h4 className="font-medium text-gray-900">{event.title}</h4>
+                          {event.description && (
+                            <p className="text-sm text-gray-600 mt-1">{event.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Link do oryginalnego pomysłu */}
+          <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Lightbulb className="w-5 h-5 text-amber-600" />
+                <div>
+                  <p className="font-medium text-amber-900">Oryginalny pomysł</p>
+                  <p className="text-sm text-amber-700">{stage.idea.title}</p>
+                </div>
+              </div>
+              <Link
+                href={`/ideas/${stage.idea.id}`}
+                className="text-amber-700 hover:text-amber-900 font-medium text-sm hover:underline"
+              >
+                Zobacz szczegóły &rarr;
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Diff with previous stage */}
       {showDiff && previousStageWithText && (
@@ -361,8 +639,26 @@ export default function StagePage({
         </Card>
       )}
 
-      {/* Law text content */}
-      {stage.lawTextContent && (
+      {/* PDF Viewer for law PDF */}
+      {stage.lawPdfPath && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center space-x-2">
+              <FileText className="w-5 h-5 text-primary-600" />
+              <h3 className="text-lg font-semibold">Treść ustawy (PDF)</h3>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <PDFViewer
+              url={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/laws/${lawId}/phases/${phaseId}/stages/${stageId}/law-pdf`}
+              title="Ustawa"
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Law text content - shown as fallback when no PDF */}
+      {stage.lawTextContent && !stage.lawPdfPath && (
         <Card>
           <CardHeader>
             <h3 className="text-lg font-semibold">Treść ustawy</h3>

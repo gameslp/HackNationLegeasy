@@ -264,7 +264,7 @@ export const downloadLawPdf = asyncHandler(async (req: Request, res: Response) =
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader(
     'Content-Disposition',
-    `attachment; filename="${stage.lawPdfName || 'law.pdf'}"`
+    `inline; filename="${stage.lawPdfName || 'law.pdf'}"`
   );
   res.sendFile(path.resolve(stage.lawPdfPath));
 });

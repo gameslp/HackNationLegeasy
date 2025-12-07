@@ -2,17 +2,24 @@
 
 import { useLaws, useDeleteLaw } from '@/features/laws/hooks/useLaws';
 import { useAdminStats } from '@/features/admin/hooks/useAdmin';
+import { useIdeas } from '@/features/ideas/hooks/useIdeas';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { PhaseBadge } from '@/components/ui/Badge';
 import { PHASE_LABELS } from '@/lib/api/types';
-import { Plus, Edit, Trash2, FileText, Layers, GitBranch, MessageSquare } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Layers, GitBranch, MessageSquare, Lightbulb, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminDashboard() {
   const { data: stats } = useAdminStats();
   const { data: lawsData, isLoading } = useLaws();
+  const { data: ideasData } = useIdeas();
   const deleteLaw = useDeleteLaw();
+
+  // Liczba aktywnych pomysłów (status NEW lub COLLECTING)
+  const activeIdeasCount = ideasData?.ideas.filter(
+    (idea) => idea.status === 'NEW' || idea.status === 'COLLECTING'
+  ).length || 0;
 
   const handleDelete = async (id: string) => {
     if (confirm('Czy na pewno chcesz usunąć tę ustawę?')) {
@@ -27,12 +34,25 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-bold text-gray-900">Panel Administracyjny</h1>
           <p className="text-gray-600 mt-1">Zarządzaj ustawami i procesem legislacyjnym</p>
         </div>
-        <Link href="/admin/laws/new">
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Nowa ustawa
-          </Button>
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/admin/ideas">
+            <Button variant="secondary">
+              <Lightbulb className="w-4 h-4 mr-2" />
+              Pomysły
+              {activeIdeasCount > 0 && (
+                <span className="ml-2 bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                  {activeIdeasCount}
+                </span>
+              )}
+            </Button>
+          </Link>
+          <Link href="/admin/laws/new">
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Nowa ustawa
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}

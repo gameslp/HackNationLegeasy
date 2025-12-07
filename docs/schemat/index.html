@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proces Legislacyjny – Interaktywny Schemat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Color palette for each section */
+      --sejm-primary: #DC2626;
+      --sejm-light: #FEE2E2;
+      --sejm-border: #FECACA;
+
+      --senat-primary: #2563EB;
+      --senat-light: #DBEAFE;
+      --senat-border: #BFDBFE;
+
+      --prezydent-primary: #7C3AED;
+      --prezydent-light: #EDE9FE;
+      --prezydent-border: #DDD6FE;
+
+      --dziennik-primary: #059669;
+      --dziennik-light: #D1FAE5;
+      --dziennik-border: #A7F3D0;
+
+      --initiative-primary: #F59E0B;
+      --initiative-light: #FEF3C7;
+      --initiative-border: #FDE68A;
+
+      --completed: #10B981;
+      --current: #3B82F6;
+      --pending: #9CA3AF;
+      --rejected: #EF4444;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+      min-height: 100vh;
+      padding: 24px;
+      color: #1E293B;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #1E293B;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      color: #64748B;
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+      padding: 16px 24px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .legend-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+    }
+
+    .legend-dot.initiative { background: var(--initiative-primary); }
+    .legend-dot.sejm { background: var(--sejm-primary); }
+    .legend-dot.senat { background: var(--senat-primary); }
+    .legend-dot.prezydent { background: var(--prezydent-primary); }
+    .legend-dot.dziennik { background: var(--dziennik-primary); }
+
+    /* Main layout */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 32px;
+    }
+
+    @media (max-width: 1024px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Flow visualization */
+    .flow-container {
+      background: white;
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+    }
+
+    /* Section styling */
+    .section {
+      margin-bottom: 32px;
+      padding: 24px;
+      border-radius: 16px;
+      position: relative;
+    }
+
+    .section::before {
+      content: '';
+      position: absolute;
+      left: 32px;
+      top: 80px;
+      bottom: 24px;
+      width: 3px;
+      border-radius: 2px;
+    }
+
+    .section.initiative {
+      background: var(--initiative-light);
+      border: 2px solid var(--initiative-border);
+    }
+    .section.initiative::before { background: var(--initiative-primary); }
+
+    .section.sejm {
+      background: var(--sejm-light);
+      border: 2px solid var(--sejm-border);
+    }
+    .section.sejm::before { background: var(--sejm-primary); }
+
+    .section.senat {
+      background: var(--senat-light);
+      border: 2px solid var(--senat-border);
+    }
+    .section.senat::before { background: var(--senat-primary); }
+
+    .section.prezydent {
+      background: var(--prezydent-light);
+      border: 2px solid var(--prezydent-border);
+    }
+    .section.prezydent::before { background: var(--prezydent-primary); }
+
+    .section.dziennik {
+      background: var(--dziennik-light);
+      border: 2px solid var(--dziennik-border);
+    }
+    .section.dziennik::before { background: var(--dziennik-primary); }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .section-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: white;
+    }
+
+    .section.initiative .section-icon { background: var(--initiative-primary); }
+    .section.sejm .section-icon { background: var(--sejm-primary); }
+    .section.senat .section-icon { background: var(--senat-primary); }
+    .section.prezydent .section-icon { background: var(--prezydent-primary); }
+    .section.dziennik .section-icon { background: var(--dziennik-primary); }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .section.initiative .section-title { color: var(--initiative-primary); }
+    .section.sejm .section-title { color: var(--sejm-primary); }
+    .section.senat .section-title { color: var(--senat-primary); }
+    .section.prezydent .section-title { color: var(--prezydent-primary); }
+    .section.dziennik .section-title { color: var(--dziennik-primary); }
+
+    /* Steps */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-left: 48px;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      position: relative;
+    }
+
+    .step-indicator {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+      transition: all 0.3s ease;
+    }
+
+    .step.completed .step-indicator {
+      background: var(--completed);
+      color: white;
+    }
+
+    .step.current .step-indicator {
+      background: var(--current);
+      color: white;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+      animation: pulse 2s infinite;
+    }
+
+    .step.pending .step-indicator {
+      background: white;
+      color: var(--pending);
+      border: 2px solid var(--pending);
+    }
+
+    .step.rejected .step-indicator {
+      background: var(--rejected);
+      color: white;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3); }
+      50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.1); }
+    }
+
+    .step-content {
+      flex: 1;
+      background: white;
+      padding: 16px 20px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+    }
+
+    .step.current .step-content {
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+      border: 2px solid var(--current);
+    }
+
+    .step.completed .step-content {
+      opacity: 0.85;
+    }
+
+    .step-name {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 4px;
+      color: #1E293B;
+    }
+
+    .step-desc {
+      font-size: 0.875rem;
+      color: #64748B;
+      line-height: 1.5;
+    }
+
+    .step-date {
+      font-size: 0.75rem;
+      color: #94A3B8;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .step-vote {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: #F1F5F9;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      display: flex;
+      gap: 16px;
+    }
+
+    .vote-for { color: #059669; font-weight: 600; }
+    .vote-against { color: #DC2626; font-weight: 600; }
+    .vote-abstain { color: #6B7280; font-weight: 600; }
+
+    /* Arrow between sections */
+    .section-arrow {
+      display: flex;
+      justify-content: center;
+      margin: -8px 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .section-arrow svg {
+      width: 32px;
+      height: 32px;
+      color: #94A3B8;
+    }
+
+    /* History sidebar */
+    .history-panel {
+      background: white;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      height: fit-content;
+      position: sticky;
+      top: 24px;
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .history-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1E293B;
+    }
+
+    .bill-badge {
+      padding: 4px 12px;
+      background: #E0F2FE;
+      color: #0369A1;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .bill-info {
+      background: #F8FAFC;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .bill-name {
+      font-weight: 600;
+      font-size: 1rem;
+      color: #1E293B;
+      margin-bottom: 8px;
+    }
+
+    .bill-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.85rem;
+      color: #64748B;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: #E2E8F0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 16px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .progress-fill.initiative { background: var(--initiative-primary); }
+    .progress-fill.sejm { background: var(--sejm-primary); }
+    .progress-fill.senat { background: var(--senat-primary); }
+    .progress-fill.prezydent { background: var(--prezydent-primary); }
+    .progress-fill.dziennik { background: var(--dziennik-primary); }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #64748B;
+      margin-bottom: 4px;
+    }
+
+    /* Timeline */
+    .timeline {
+      position: relative;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #E2E8F0;
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 16px;
+      padding: 12px 0;
+      position: relative;
+    }
+
+    .timeline-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .timeline-dot.initiative { background: var(--initiative-primary); }
+    .timeline-dot.sejm { background: var(--sejm-primary); }
+    .timeline-dot.senat { background: var(--senat-primary); }
+    .timeline-dot.prezydent { background: var(--prezydent-primary); }
+    .timeline-dot.dziennik { background: var(--dziennik-primary); }
+    .timeline-dot.pending {
+      background: white;
+      border: 2px solid #CBD5E1;
+    }
+
+    .timeline-content {
+      flex: 1;
+    }
+
+    .timeline-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #1E293B;
+      margin-bottom: 2px;
+    }
+
+    .timeline-date {
+      font-size: 0.8rem;
+      color: #94A3B8;
+    }
+
+    .timeline-status {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    .timeline-status.success {
+      background: #D1FAE5;
+      color: #059669;
+    }
+
+    .timeline-status.current {
+      background: #DBEAFE;
+      color: #2563EB;
+    }
+
+    .timeline-status.pending {
+      background: #F1F5F9;
+      color: #64748B;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 1.75rem;
+      }
+
+      .legend {
+        gap: 12px;
+      }
+
+      .section {
+        padding: 16px;
+      }
+
+      .steps {
+        padding-left: 32px;
+      }
+
+      .section::before {
+        left: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>Proces Legislacyjny w Polsce</h1>
+      <p>Jak powstaje prawo? Prosta wizualizacja drogi ustawy od pomyslu do publikacji</p>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot initiative"></div>
+        <span>Inicjatywa</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot sejm"></div>
+        <span>Sejm (460 poslow)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot senat"></div>
+        <span>Senat (100 senatorow)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot prezydent"></div>
+        <span>Prezydent RP</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot dziennik"></div>
+        <span>Dziennik Ustaw</span>
+      </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+      <!-- Flow Visualization -->
+      <div class="flow-container">
+
+        <!-- INITIATIVE -->
+        <div class="section initiative" id="section-initiative">
+          <div class="section-header">
+            <div class="section-icon">📝</div>
+            <div class="section-title">Inicjatywa Ustawodawcza</div>
+          </div>
+          <div class="steps">
+            <div class="step completed" data-step="initiative-1">
+              <div class="step-indicator">✓</div>
+              <div class="step-content">
+                <div class="step-name">Zlozenie projektu ustawy</div>
+                <div class="step-desc">Projekt moze zlozyc: Prezydent, Rada Ministrow, 15 poslow, Senat lub 100 000 obywateli</div>
+                <div class="step-date">📅 15.10.2024</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12l7 7 7-7"/>
+          </svg>
+        </div>
+
+        <!-- SEJM -->
+        <div class="section sejm" id="section-sejm">
+          <div class="section-header">
+            <div class="section-icon">🏛️</div>
+            <div class="section-title">Sejm</div>
+          </div>
+          <div class="steps">
+            <div class="step completed" data-step="sejm-1">
+              <div class="step-indicator">✓</div>
+              <div class="step-content">
+                <div class="step-name">I Czytanie</div>
+                <div class="step-desc">Przedstawienie projektu, ogolna debata i skierowanie do komisji</div>
+                <div class="step-date">📅 28.10.2024</div>
+              </div>
+            </div>
+            <div class="step completed" data-step="sejm-2">
+              <div class="step-indicator">✓</div>
+              <div class="step-content">
+                <div class="step-name">Prace w komisji sejmowej</div>
+                <div class="step-desc">Szczegolowa analiza, eksperci, poprawki, przygotowanie sprawozdania</div>
+                <div class="step-date">📅 05.11.2024 - 20.11.2024</div>
+              </div>
+            </div>
+            <div class="step completed" data-step="sejm-3">
+              <div class="step-indicator">✓</div>
+              <div class="step-content">
+                <div class="step-name">II Czytanie</div>
+                <div class="step-desc">Prezentacja sprawozdania komisji, dyskusja nad poprawkami</div>
+                <div class="step-date">📅 25.11.2024</div>
+              </div>
+            </div>
+            <div class="step current" data-step="sejm-4">
+              <div class="step-indicator">4</div>
+              <div class="step-content">
+                <div class="step-name">III Czytanie i glosowanie</div>
+                <div class="step-desc">Ostateczna debata i glosowanie. Ustawa przechodzi zwykla wiekszoscia glosow (minimum 230 poslow obecnych)</div>
+                <div class="step-vote">
+                  <span class="vote-for">Za: 267</span>
+                  <span class="vote-against">Przeciw: 180</span>
+                  <span class="vote-abstain">Wstrzymalo sie: 13</span>
+                </div>
+                <div class="step-date">📅 Dzis, 06.12.2024</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12l7 7 7-7"/>
+          </svg>
+        </div>
+
+        <!-- SENAT -->
+        <div class="section senat" id="section-senat">
+          <div class="section-header">
+            <div class="section-icon">🏛️</div>
+            <div class="section-title">Senat</div>
+          </div>
+          <div class="steps">
+            <div class="step pending" data-step="senat-1">
+              <div class="step-indicator">1</div>
+              <div class="step-content">
+                <div class="step-name">Prace w komisji senackiej</div>
+                <div class="step-desc">Senat ma 30 dni na rozpatrzenie ustawy. Komisja analizuje i przygotowuje stanowisko</div>
+              </div>
+            </div>
+            <div class="step pending" data-step="senat-2">
+              <div class="step-indicator">2</div>
+              <div class="step-content">
+                <div class="step-name">Glosowanie Senatu</div>
+                <div class="step-desc">Senat moze: przyjac bez zmian, wprowadzic poprawki lub odrzucic calosc. Potrzeba 50 senatorow</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12l7 7 7-7"/>
+          </svg>
+        </div>
+
+        <!-- PREZYDENT -->
+        <div class="section prezydent" id="section-prezydent">
+          <div class="section-header">
+            <div class="section-icon">🦅</div>
+            <div class="section-title">Prezydent RP</div>
+          </div>
+          <div class="steps">
+            <div class="step pending" data-step="prezydent-1">
+              <div class="step-indicator">1</div>
+              <div class="step-content">
+                <div class="step-name">Decyzja Prezydenta (21 dni)</div>
+                <div class="step-desc">Prezydent moze: podpisac ustawe, skierowac do Trybunalu Konstytucyjnego lub zlozyc weto</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12l7 7 7-7"/>
+          </svg>
+        </div>
+
+        <!-- DZIENNIK USTAW -->
+        <div class="section dziennik" id="section-dziennik">
+          <div class="section-header">
+            <div class="section-icon">📜</div>
+            <div class="section-title">Dziennik Ustaw</div>
+          </div>
+          <div class="steps">
+            <div class="step pending" data-step="dziennik-1">
+              <div class="step-indicator">1</div>
+              <div class="step-content">
+                <div class="step-name">Publikacja ustawy</div>
+                <div class="step-desc">Ustawa otrzymuje numer i date publikacji. Po vacatio legis (zwykle 14 dni) wchodzi w zycie</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- History Panel -->
+      <div class="history-panel">
+        <div class="history-header">
+          <div class="history-title">Historia ustawy</div>
+          <div class="bill-badge">Druk nr 2137</div>
+        </div>
+
+        <div class="bill-info">
+          <div class="bill-name">Ustawa o ochronie danych osobowych w sektorze zdrowia</div>
+          <div class="bill-meta">
+            <span>Wnioskodawca: Rada Ministrow</span>
+            <span>Data wplywu: 15.10.2024</span>
+          </div>
+        </div>
+
+        <div class="progress-label">
+          <span>Postep procesu</span>
+          <span>60%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill sejm" style="width: 60%"></div>
+        </div>
+
+        <div class="timeline" id="timeline">
+          <!-- Timeline items will be rendered by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Mock step history data - JSON format
+    const stepHistory = {
+      bill: {
+        id: "2137",
+        title: "Ustawa o ochronie danych osobowych w sektorze zdrowia",
+        initiator: "Rada Ministrow",
+        submissionDate: "2024-10-15",
+        currentStage: "sejm",
+        currentStep: "sejm-4",
+        progress: 60
+      },
+      history: [
+        {
+          id: "initiative-1",
+          stage: "initiative",
+          title: "Zlozenie projektu",
+          date: "2024-10-15",
+          status: "completed",
+          details: "Projekt zlozony przez Rade Ministrow"
+        },
+        {
+          id: "sejm-1",
+          stage: "sejm",
+          title: "I Czytanie w Sejmie",
+          date: "2024-10-28",
+          status: "completed",
+          details: "Skierowano do Komisji Zdrowia i Komisji Cyfryzacji"
+        },
+        {
+          id: "sejm-2",
+          stage: "sejm",
+          title: "Prace w komisjach",
+          date: "2024-11-05",
+          endDate: "2024-11-20",
+          status: "completed",
+          details: "Przyjeto 12 poprawek, odrzucono 5"
+        },
+        {
+          id: "sejm-3",
+          stage: "sejm",
+          title: "II Czytanie",
+          date: "2024-11-25",
+          status: "completed",
+          details: "Zgloszono 3 dodatkowe poprawki"
+        },
+        {
+          id: "sejm-4",
+          stage: "sejm",
+          title: "III Czytanie i glosowanie",
+          date: "2024-12-06",
+          status: "current",
+          details: "Trwa glosowanie nad ustawa",
+          votes: {
+            for: 267,
+            against: 180,
+            abstain: 13
+          }
+        },
+        {
+          id: "senat-1",
+          stage: "senat",
+          title: "Prace w komisji senackiej",
+          date: null,
+          status: "pending",
+          details: "Oczekuje na przekazanie z Sejmu"
+        },
+        {
+          id: "senat-2",
+          stage: "senat",
+          title: "Glosowanie Senatu",
+          date: null,
+          status: "pending",
+          details: null
+        },
+        {
+          id: "prezydent-1",
+          stage: "prezydent",
+          title: "Decyzja Prezydenta",
+          date: null,
+          status: "pending",
+          details: null
+        },
+        {
+          id: "dziennik-1",
+          stage: "dziennik",
+          title: "Publikacja w Dzienniku Ustaw",
+          date: null,
+          status: "pending",
+          details: null
+        }
+      ]
+    };
+
+    // Render timeline
+    function renderTimeline() {
+      const timeline = document.getElementById('timeline');
+      timeline.innerHTML = '';
+
+      stepHistory.history.forEach(item => {
+        const timelineItem = document.createElement('div');
+        timelineItem.className = 'timeline-item';
+
+        const statusClass = item.status === 'completed' ? 'success' :
+                           item.status === 'current' ? 'current' : 'pending';
+
+        const statusText = item.status === 'completed' ? 'Zakonczone' :
+                          item.status === 'current' ? 'W trakcie' : 'Oczekuje';
+
+        const dotClass = item.status === 'pending' ? 'pending' : item.stage;
+
+        timelineItem.innerHTML = `
+          <div class="timeline-dot ${dotClass}"></div>
+          <div class="timeline-content">
+            <div class="timeline-title">${item.title}</div>
+            ${item.date ? `<div class="timeline-date">${formatDate(item.date)}${item.endDate ? ' - ' + formatDate(item.endDate) : ''}</div>` : ''}
+            <div class="timeline-status ${statusClass}">${statusText}</div>
+          </div>
+        `;
+
+        timeline.appendChild(timelineItem);
+      });
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('pl-PL', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTimeline();
+
+      // Update progress bar based on current progress
+      const progressFill = document.querySelector('.progress-fill');
+      const progressLabel = document.querySelector('.progress-label span:last-child');
+      progressFill.style.width = stepHistory.bill.progress + '%';
+      progressLabel.textContent = stepHistory.bill.progress + '%';
+
+      // Set progress bar color based on current stage
+      progressFill.className = 'progress-fill ' + stepHistory.bill.currentStage;
+    });
+
+    // Export step history as JSON (for debugging/demo)
+    console.log('Step History JSON:', JSON.stringify(stepHistory, null, 2));
+  </script>
+</body>
+</html>

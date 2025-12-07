@@ -26,6 +26,30 @@ export const getPhaseById = asyncHandler(async (req: Request, res: Response) => 
       stages: {
         orderBy: { order: 'asc' },
       },
+      // Dla fazy PRECONSULTATION - pobierz powiązany pomysł z wszystkimi danymi
+      idea: {
+        include: {
+          questions: {
+            orderBy: { order: 'asc' },
+          },
+          surveyResponses: true,
+          opinions: {
+            include: {
+              answers: {
+                include: {
+                  question: true,
+                },
+              },
+            },
+          },
+          timeline: {
+            orderBy: { order: 'asc' },
+          },
+          attachments: {
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+      },
     },
   });
 

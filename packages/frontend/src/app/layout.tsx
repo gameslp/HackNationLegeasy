@@ -45,6 +45,12 @@ export default function RootLayout({
                       Ustawy
                     </Link>
                     <Link
+                      href="/ideas"
+                      className="text-gray-600 hover:text-gray-900 hover:bg-amber-50 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
+                    >
+                      Pomysły
+                    </Link>
+                    <Link
                       href="/admin"
                       className="bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 px-4 py-2 rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-200 active:scale-95"
                     >
