@@ -2,15 +2,16 @@
 
 import Link from 'next/link';
 import { motion } from 'motion/react';
+import { Calendar } from 'lucide-react';
 import type { Stage, PhaseType } from '@/lib/api/types';
 
-const PHASE_COLORS: Record<PhaseType, string> = {
-  PRECONSULTATION: '#f97316',
-  RCL: '#0ea5e9',
-  SEJM: '#7c3aed',
-  SENAT: '#16a34a',
-  PRESIDENT: '#0ea5e9',
-  JOURNAL: '#6366f1',
+const PHASE_COLORS: Record<PhaseType, { hex: string; light: string; border: string }> = {
+  PRECONSULTATION: { hex: '#f97316', light: 'bg-orange-50', border: 'border-orange-200' },
+  RCL: { hex: '#0ea5e9', light: 'bg-sky-50', border: 'border-sky-200' },
+  SEJM: { hex: '#7c3aed', light: 'bg-violet-50', border: 'border-violet-200' },
+  SENAT: { hex: '#16a34a', light: 'bg-green-50', border: 'border-green-200' },
+  PRESIDENT: { hex: '#3b82f6', light: 'bg-blue-50', border: 'border-blue-200' },
+  JOURNAL: { hex: '#6366f1', light: 'bg-indigo-50', border: 'border-indigo-200' },
 };
 
 interface StageGraphProps {
@@ -23,103 +24,92 @@ interface StageGraphProps {
 export function StageGraph({ lawId, phaseId, phaseType, stages }: StageGraphProps) {
   if (!stages.length) return null;
 
-  const color = PHASE_COLORS[phaseType] || '#2563eb';
+  const colors = PHASE_COLORS[phaseType] || PHASE_COLORS.RCL;
   const sorted = [...stages].sort((a, b) => (a.order || 0) - (b.order || 0));
-  const spacing = 180;
-  const nodeRadius = 26;
-  const positions = sorted.map((_, idx) => ({
-    x: 60 + idx * spacing,
-    y: 80,
-  }));
-  const width = Math.max(sorted.length - 1, 1) * spacing + 120;
-  const height = 160;
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 overflow-hidden">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4 overflow-hidden">
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div
-            className="w-8 h-8 rounded-xl shadow-inner"
-            style={{ background: `${color}22`, border: `1px solid ${color}55` }}
+            className="w-6 h-6 rounded-lg"
+            style={{ background: `${colors.hex}22`, border: `1px solid ${colors.hex}55` }}
           />
           <div>
-            <p className="text-sm text-gray-500">Przepływ etapów</p>
-            <p className="text-lg font-semibold text-gray-900">
+            <p className="text-xs text-gray-500">Przepływ etapów</p>
+            <p className="text-sm font-semibold text-gray-900">
               {sorted.length} {sorted.length === 1 ? 'etap' : 'etapy'}
             </p>
           </div>
         </div>
-        <p className="text-xs text-gray-500">Kliknij w węzeł, aby przejść do etapu</p>
       </div>
 
-      <div className="relative" style={{ height }}>
-        <div className="overflow-x-auto">
-          <div className="relative" style={{ width, height }}>
-            <svg
-              width={width}
-              height={height}
-              className="absolute inset-0"
-              aria-hidden
-            >
-              {positions.map((pos, idx) => {
-                const next = positions[idx + 1];
-                if (!next) return null;
-                return (
-                  <line
-                    key={`edge-${idx}`}
-                    x1={pos.x}
-                    y1={pos.y}
-                    x2={next.x}
-                    y2={next.y}
-                    stroke={`${color}55`}
-                    strokeWidth={4}
-                    strokeLinecap="round"
-                  />
-                );
-              })}
-            </svg>
-
-            {sorted.map((stage, idx) => {
-              const pos = positions[idx];
-              return (
-                <motion.div
-                  key={stage.id}
-                  className="absolute"
-                  style={{
-                    left: pos.x - nodeRadius,
-                    top: pos.y - nodeRadius,
-                    width: nodeRadius * 2,
-                  }}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  whileHover={{ y: -6 }}
+      {/* Horizontal scroll container */}
+      <div className="overflow-x-auto pb-2">
+        <div className="flex items-center gap-3 min-w-fit">
+          {sorted.map((stage, idx) => (
+            <div key={stage.id} className="flex items-center">
+              {/* Stage card */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+              >
+                <Link
+                  href={`/laws/${lawId}/phases/${phaseId}/stages/${stage.id}`}
+                  className="block"
                 >
-                  <Link
-                    href={`/laws/${lawId}/phases/${phaseId}/stages/${stage.id}`}
-                    className="flex flex-col items-center gap-2"
+                  <motion.div
+                    className={`w-36 p-3 rounded-lg border-2 ${colors.border} ${colors.light}
+                               hover:shadow-md transition-all duration-200 cursor-pointer`}
+                    whileHover={{ y: -3, scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <motion.div
-                      className="w-full h-14 rounded-xl shadow-lg flex items-center justify-center text-sm font-semibold text-white"
-                      style={{ background: color }}
-                      whileHover={{ scale: 1.08 }}
-                      whileTap={{ scale: 0.97 }}
+                    {/* Stage number */}
+                    <div
+                      className="w-5 h-5 rounded-full text-white text-[10px] font-bold
+                                 flex items-center justify-center mb-2"
+                      style={{ backgroundColor: colors.hex }}
                     >
-                      {stage.name.slice(0, 8)}
-                    </motion.div>
-                    <div className="text-center w-40">
-                      <p className="text-xs text-gray-500 font-medium">
-                        {new Date(stage.date).toLocaleDateString('pl-PL')}
-                      </p>
-                      <p className="text-sm text-gray-900 font-semibold line-clamp-2">
-                        {stage.name}
-                      </p>
+                      {idx + 1}
                     </div>
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </div>
+
+                    {/* Stage name */}
+                    <h4 className="font-medium text-gray-900 text-xs leading-tight line-clamp-2 min-h-[2rem] mb-2">
+                      {stage.name}
+                    </h4>
+
+                    {/* Date */}
+                    <div className="flex items-center gap-1 text-gray-500">
+                      <Calendar className="w-3 h-3" />
+                      <span className="text-[10px]">
+                        {new Date(stage.date).toLocaleDateString('pl-PL', {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                      </span>
+                    </div>
+                  </motion.div>
+                </Link>
+              </motion.div>
+
+              {/* Connector arrow */}
+              {idx < sorted.length - 1 && (
+                <div className="flex items-center mx-1">
+                  <div
+                    className="w-4 h-0.5"
+                    style={{ backgroundColor: `${colors.hex}55` }}
+                  />
+                  <div
+                    className="w-0 h-0 border-t-[4px] border-b-[4px] border-l-[6px]
+                               border-t-transparent border-b-transparent"
+                    style={{ borderLeftColor: `${colors.hex}55` }}
+                  />
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </div>

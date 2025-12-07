@@ -44,6 +44,7 @@ export interface Stage {
   order: number;
   createdAt: string;
   phaseType?: PhaseType;
+  phaseOrder?: number;
 }
 
 export interface StageFile {

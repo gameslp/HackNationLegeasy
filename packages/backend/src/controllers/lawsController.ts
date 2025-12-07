@@ -146,8 +146,17 @@ export const getAllStagesForLaw = asyncHandler(async (req: Request, res: Respons
     phase.stages.map((stage) => ({
       ...stage,
       phaseType: phase.type,
+      phaseOrder: phase.order,
     }))
   );
+
+  // Sort by phase order first, then by stage order within phase
+  stages.sort((a, b) => {
+    if (a.phaseOrder !== b.phaseOrder) {
+      return a.phaseOrder - b.phaseOrder;
+    }
+    return (a.order || 0) - (b.order || 0);
+  });
 
   sendSuccess(res, { stages });
 });

@@ -54,22 +54,24 @@ export default function StagePage({
   } | null>(null);
   const [showDiff, setShowDiff] = useState(false);
 
-  // Find the previous stage with lawTextContent
+  // Find the previous stage with lawTextContent across ALL phases
   const previousStageWithText = useMemo(() => {
     if (!allStagesData?.stages || !stage) return null;
 
-    // Get all stages with text content, sorted by order
-    const stagesWithText = allStagesData.stages
-      .filter(s => s.lawTextContent && s.id !== stageId)
-      .sort((a, b) => a.order - b.order);
+    // Find the current stage's index in the sorted list
+    // Backend returns stages sorted by phaseOrder, then by stage order
+    const currentIndex = allStagesData.stages.findIndex(s => s.id === stageId);
+    if (currentIndex === -1) return null;
 
-    // Find the current stage's order
-    const currentStage = allStagesData.stages.find(s => s.id === stageId);
-    if (!currentStage) return null;
+    // Look backwards from current stage to find the most recent with lawTextContent
+    for (let i = currentIndex - 1; i >= 0; i--) {
+      const s = allStagesData.stages[i];
+      if (s.lawTextContent) {
+        return s;
+      }
+    }
 
-    // Find the most recent stage before current that has text
-    const previousStages = stagesWithText.filter(s => s.order < currentStage.order);
-    return previousStages.length > 0 ? previousStages[previousStages.length - 1] : null;
+    return null;
   }, [allStagesData, stage, stageId]);
 
   // Fetch diff when showDiff is true
