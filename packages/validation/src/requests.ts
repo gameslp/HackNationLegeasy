@@ -136,3 +136,11 @@ export type AnalyzeRequest = z.infer<typeof AnalyzeRequestSchema>;
 export type PhaseIdParams = z.infer<typeof PhaseIdParamsSchema>;
 
 export type ScanLinksRequest = z.infer<typeof ScanLinksRequestSchema>;
+
+// ============ SEJM IMPORT ============
+export const ImportSejmProcessSchema = z.object({
+  term: z.number().int().positive().min(1).max(20),
+  processNumber: z.string().min(1).max(50),
+});
+
+export type ImportSejmProcessRequest = z.infer<typeof ImportSejmProcessSchema>;

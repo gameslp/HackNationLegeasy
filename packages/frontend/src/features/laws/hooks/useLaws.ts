@@ -443,3 +443,16 @@ export function useDeleteFile() {
     },
   });
 }
+
+// Sejm Import
+export function useImportSejmProcess() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ term, processNumber }: { term: number; processNumber: string }) =>
+      apiClient.post<LawWithPhases>('/admin/laws/import', { term, processNumber }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['laws'] });
+    },
+  });
+}

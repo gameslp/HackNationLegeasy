@@ -13,8 +13,12 @@ import {
   toggleImpactPublish,
   getAdminStageImpactAnalysis,
 } from '../controllers/impactController';
+import {
+  importSejmProcess,
+  previewSejmImport,
+} from '../controllers/sejmImportController';
 import { validate } from '../middleware/validate';
-import { PhaseIdParamsSchema, ScanLinksRequestSchema } from '@repo/validation';
+import { PhaseIdParamsSchema, ScanLinksRequestSchema, ImportSejmProcessSchema } from '@repo/validation';
 
 const router = Router();
 
@@ -37,6 +41,18 @@ router.post(
   '/scan-links',
   validate(ScanLinksRequestSchema, 'body'),
   scanLinksForPhase
+);
+
+// Sejm Import
+router.post(
+  '/laws/import/preview',
+  validate(ImportSejmProcessSchema, 'body'),
+  previewSejmImport
+);
+router.post(
+  '/laws/import',
+  validate(ImportSejmProcessSchema, 'body'),
+  importSejmProcess
 );
 
 export default router;

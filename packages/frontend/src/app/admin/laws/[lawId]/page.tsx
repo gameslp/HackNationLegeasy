@@ -8,13 +8,14 @@ import {
   useUpdateLaw,
   useCreatePhase,
   useDeletePhase,
+  useImportSejmProcess,
 } from '@/features/laws/hooks/useLaws';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea, Select } from '@/components/ui/Input';
 import { PhaseBadge } from '@/components/ui/Badge';
 import { PHASE_LABELS, PhaseType } from '@/lib/api/types';
-import { ArrowLeft, Plus, Edit, Trash2, Save } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Save, Download, Loader } from 'lucide-react';
 import Link from 'next/link';
 
 const phaseTypeOptions = Object.entries(PHASE_LABELS).map(([value, label]) => ({
@@ -36,6 +37,7 @@ export default function AdminLawPage({
   const updateLaw = useUpdateLaw();
   const createPhase = useCreatePhase();
   const deletePhase = useDeletePhase();
+  const importSejmProcess = useImportSejmProcess();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -43,6 +45,8 @@ export default function AdminLawPage({
     description: '',
     startDate: new Date().toISOString().split('T')[0],
     publishDate: '',
+    term: '',
+    processNumber: '',
   });
 
   const [showPhaseForm, setShowPhaseForm] = useState(false);
@@ -51,6 +55,7 @@ export default function AdminLawPage({
     startDate: new Date().toISOString().split('T')[0],
     endDate: '',
   });
+
 
   useEffect(() => {
     if (law && !isNew) {
@@ -62,6 +67,8 @@ export default function AdminLawPage({
         publishDate: law.publishDate
           ? new Date(law.publishDate).toISOString().split('T')[0]
           : '',
+        term: law.term?.toString() || '',
+        processNumber: law.processNumber || '',
       });
     }
   }, [law, isNew]);
@@ -112,6 +119,23 @@ export default function AdminLawPage({
   const handleDeletePhase = async (phaseId: string) => {
     if (confirm('Czy na pewno chcesz usunąć tę fazę?')) {
       await deletePhase.mutateAsync({ lawId, phaseId });
+    }
+  };
+
+  const handleImportFromSejm = async () => {
+    if (!formData.term || !formData.processNumber) {
+      return;
+    }
+
+    try {
+      const result = await importSejmProcess.mutateAsync({
+        term: parseInt(formData.term),
+        processNumber: formData.processNumber,
+      });
+      // Przekieruj do nowo utworzonej ustawy
+      router.push(`/admin/laws/${result.id}`);
+    } catch (error) {
+      console.error('Import failed:', error);
     }
   };
 
@@ -187,13 +211,85 @@ export default function AdminLawPage({
                 }
               />
             </div>
+
+            {/* Sejm Import Fields */}
+            {isNew && (
+              <>
+                <div className="border-t pt-4 mt-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                    Import z Sejm API (opcjonalny)
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="Numer kadencji (np. 10)"
+                      type="number"
+                      value={formData.term}
+                      onChange={(e) =>
+                        setFormData({ ...formData, term: e.target.value })
+                      }
+                      placeholder="10"
+                    />
+                    <Input
+                      label="Numer procesu"
+                      value={formData.processNumber}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          processNumber: e.target.value,
+                        })
+                      }
+                      placeholder="1"
+                    />
+                  </div>
+                  {importSejmProcess.isError && (
+                    <div className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded">
+                      {importSejmProcess.error?.message || 'Błąd podczas importu'}
+                    </div>
+                  )}
+                  <div className="mt-3">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleImportFromSejm}
+                      disabled={
+                        importSejmProcess.isPending ||
+                        !formData.term ||
+                        !formData.processNumber
+                      }
+                    >
+                      {importSejmProcess.isPending ? (
+                        <>
+                          <Loader className="w-4 h-4 mr-2 animate-spin" />
+                          Importowanie...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4 mr-2" />
+                          Importuj z Sejm API
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Import automatycznie utworzy ustawę wraz z fazami i
+                      etapami z Sejm API
+                    </p>
+                  </div>
+                </div>
+                <div className="border-t pt-4 mt-4">
+                  <p className="text-sm text-gray-600 mb-3">
+                    Lub utwórz ustawę ręcznie:
+                  </p>
+                </div>
+              </>
+            )}
+
             <div className="flex justify-end">
               <Button
                 type="submit"
                 disabled={createLaw.isPending || updateLaw.isPending}
               >
                 <Save className="w-4 h-4 mr-2" />
-                {isNew ? 'Utwórz ustawę' : 'Zapisz zmiany'}
+                {isNew ? 'Utwórz ustawę ręcznie' : 'Zapisz zmiany'}
               </Button>
             </div>
           </form>
