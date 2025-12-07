@@ -6,7 +6,11 @@ import { useCreateDiscussion } from '../hooks/useLaws';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea } from '@/components/ui/Input';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
-import { MessageCircle, Send } from 'lucide-react';
+import { MessageCircle, Send, Shield, AlertTriangle, Flag } from 'lucide-react';
+import Link from 'next/link';
+
+const CONSENT_STORAGE_KEY = 'legeasy_discussion_consent';
+const NICKNAME_STORAGE_KEY = 'legeasy_nickname';
 
 interface DiscussionSectionProps {
   discussions: Discussion[];
@@ -24,12 +28,19 @@ export function DiscussionSection({
   const [nickname, setNickname] = useState('');
   const [content, setContent] = useState('');
   const [showNicknameModal, setShowNicknameModal] = useState(false);
+  const [hasConsent, setHasConsent] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [rulesAccepted, setRulesAccepted] = useState(false);
   const createDiscussion = useCreateDiscussion();
 
   useEffect(() => {
-    const savedNickname = localStorage.getItem('legeasy_nickname');
+    const savedNickname = localStorage.getItem(NICKNAME_STORAGE_KEY);
+    const savedConsent = localStorage.getItem(CONSENT_STORAGE_KEY);
     if (savedNickname) {
       setNickname(savedNickname);
+    }
+    if (savedConsent === 'true') {
+      setHasConsent(true);
     }
   }, []);
 
@@ -54,10 +65,18 @@ export function DiscussionSection({
   };
 
   const handleSetNickname = (newNickname: string) => {
+    if (!ageConfirmed || !rulesAccepted) return;
+
     setNickname(newNickname);
-    localStorage.setItem('legeasy_nickname', newNickname);
+    setHasConsent(true);
+    localStorage.setItem(NICKNAME_STORAGE_KEY, newNickname);
+    localStorage.setItem(CONSENT_STORAGE_KEY, 'true');
     setShowNicknameModal(false);
+    setAgeConfirmed(false);
+    setRulesAccepted(false);
   };
+
+  const canSubmitNickname = nickname.trim() && ageConfirmed && rulesAccepted;
 
   return (
     <Card>
@@ -69,24 +88,111 @@ export function DiscussionSection({
         </div>
       </CardHeader>
       <CardContent>
-        {/* Nickname modal */}
+        {/* Safety notice for all users */}
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <div className="text-sm text-amber-800">
+            <p className="font-medium">Zasady bezpieczeństwa:</p>
+            <ul className="list-disc pl-4 mt-1 space-y-0.5 text-amber-700">
+              <li>Nie podawaj danych osobowych (imię, nazwisko, adres, telefon, email)</li>
+              <li>Nie udostępniaj informacji pozwalających na identyfikację</li>
+              <li>Komentarze są publiczne i widoczne dla wszystkich</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Nickname modal with consent */}
         {showNicknameModal && (
-          <div className="mb-6 p-5 bg-gradient-to-br from-primary-50 to-blue-50 rounded-xl border-2 border-primary-200 shadow-md animate-in fade-in duration-300">
-            <p className="text-sm font-semibold text-gray-700 mb-3">
-              Podaj swój nick, aby dodawać komentarze:
-            </p>
-            <div className="flex gap-2">
+          <div
+            className="mb-6 p-5 bg-gradient-to-br from-primary-50 to-blue-50 rounded-xl border-2 border-primary-200 shadow-md animate-in fade-in duration-300"
+            role="dialog"
+            aria-labelledby="nickname-modal-title"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Shield className="w-5 h-5 text-primary-600" aria-hidden="true" />
+              <p id="nickname-modal-title" className="text-sm font-semibold text-gray-700">
+                Podaj swój nick, aby dodawać komentarze:
+              </p>
+            </div>
+
+            <div className="mb-4">
               <Input
-                placeholder="Twój nick"
+                placeholder="Twój nick (pseudonim)"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                className="flex-1"
+                className="w-full"
+                aria-label="Podaj pseudonim"
+                aria-describedby="nickname-hint"
               />
+              <p id="nickname-hint" className="text-xs text-gray-500 mt-1">
+                Użyj pseudonimu - nie podawaj prawdziwego imienia i nazwiska.
+              </p>
+            </div>
+
+            {/* Age confirmation */}
+            <div className="space-y-3 mb-4 p-3 bg-white/70 rounded-lg border border-primary-100">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={ageConfirmed}
+                  onChange={(e) => setAgeConfirmed(e.target.checked)}
+                  className="mt-1 w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  aria-describedby="age-desc"
+                />
+                <span id="age-desc" className="text-sm text-gray-700">
+                  <strong>Potwierdzam, że mam ukończone 16 lat</strong> lub działam za zgodą
+                  i pod nadzorem rodzica/opiekuna prawnego.
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rulesAccepted}
+                  onChange={(e) => setRulesAccepted(e.target.checked)}
+                  className="mt-1 w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  aria-describedby="rules-desc"
+                />
+                <span id="rules-desc" className="text-sm text-gray-700">
+                  Akceptuję{' '}
+                  <Link
+                    href="/regulamin"
+                    className="text-primary-600 hover:underline"
+                    target="_blank"
+                  >
+                    Regulamin
+                  </Link>{' '}
+                  i{' '}
+                  <Link
+                    href="/polityka-prywatnosci"
+                    className="text-primary-600 hover:underline"
+                    target="_blank"
+                  >
+                    Politykę Prywatności
+                  </Link>
+                  . Rozumiem, że nie powinienem/powinnam podawać danych osobowych.
+                </span>
+              </label>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setShowNicknameModal(false);
+                  setAgeConfirmed(false);
+                  setRulesAccepted(false);
+                }}
+                type="button"
+              >
+                Anuluj
+              </Button>
               <Button
                 onClick={() => handleSetNickname(nickname)}
-                disabled={!nickname.trim()}
+                disabled={!canSubmitNickname}
+                type="button"
               >
-                Zapisz
+                Zapisz i kontynuuj
               </Button>
             </div>
           </div>
@@ -121,15 +227,26 @@ export function DiscussionSection({
                       {discussion.nickname}
                     </span>
                   </div>
-                  <span className="text-xs text-gray-500 font-medium">
-                    {new Date(discussion.createdAt).toLocaleString('pl-PL', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 font-medium">
+                      {new Date(discussion.createdAt).toLocaleString('pl-PL', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                    {/* DSA Report Button */}
+                    <Link
+                      href={`/zgloszenie?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}&comment=${discussion.id}`}
+                      className="text-gray-400 hover:text-amber-600 transition-colors p-1 rounded-full hover:bg-amber-50"
+                      title="Zgłoś treść (DSA)"
+                      aria-label="Zgłoś tę treść jako nielegalną"
+                    >
+                      <Flag className="w-3.5 h-3.5" aria-hidden="true" />
+                    </Link>
+                  </div>
                 </div>
                 <p className="text-gray-700 whitespace-pre-wrap leading-relaxed pl-10">
                   {discussion.content}

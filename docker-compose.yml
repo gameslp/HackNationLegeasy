@@ -11,7 +11,7 @@ services:
       MYSQL_USER: appuser
       MYSQL_PASSWORD: apppassword
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -20,6 +20,53 @@ services:
       timeout: 5s
       retries: 10
     command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - legeasy_network
+
+  backend:
+    build:
+      context: .
+      dockerfile: packages/backend/Dockerfile
+    container_name: legeasy_backend
+    restart: always
+    ports:
+      - "3040:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: mysql://appuser:apppassword@mysql:3306/legeasy
+      SHADOW_DATABASE_URL: mysql://appuser:apppassword@mysql:3306/shadow_db
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - legeasy_network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: packages/frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3040/api
+    container_name: legeasy_frontend
+    restart: always
+    ports:
+      - "3041:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:3040/api
+    depends_on:
+      - backend
+    networks:
+      - legeasy_network
 
 volumes:
   mysql_data:
+  uploads_data:
+
+networks:
+  legeasy_network:
+    driver: bridge

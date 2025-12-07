@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { prisma } from '@repo/database';
+import { prisma, IdeaArea, IdeaStatus, IdeaStage, RespondentType } from '@repo/database';
 import { asyncHandler } from '../middleware/asyncHandler';
 import { sendSuccess, sendError } from '../middleware/response';
-import { IdeaArea, IdeaStatus, IdeaStage, RespondentType } from '@prisma/client';
 import { summarizeIdeaOpinions } from '../services/aiService';
 
 // GET /api/ideas - Lista pomysłów z filtrami

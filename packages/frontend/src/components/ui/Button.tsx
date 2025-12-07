@@ -1,4 +1,4 @@
-import { ReactNode, ButtonHTMLAttributes } from 'react';
+import { ReactNode, ButtonHTMLAttributes, forwardRef } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
@@ -19,23 +19,22 @@ const sizes = {
   lg: 'px-6 py-3 text-base',
 };
 
-export function Button({
-  variant = 'primary',
-  size = 'md',
-  children,
-  className = '',
-  disabled,
-  ...props
-}: ButtonProps) {
-  return (
-    <button
-      className={`inline-flex items-center justify-center gap-2 font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
-        variants[variant]
-      } ${sizes[size]} ${disabled ? 'opacity-50 cursor-not-allowed hover:shadow-none' : ''} ${className}`}
-      disabled={disabled}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-}
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  function Button(
+    { variant = 'primary', size = 'md', children, className = '', disabled, ...props },
+    ref
+  ) {
+    return (
+      <button
+        ref={ref}
+        className={`inline-flex items-center justify-center gap-2 font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
+          variants[variant]
+        } ${sizes[size]} ${disabled ? 'opacity-50 cursor-not-allowed hover:shadow-none' : ''} ${className}`}
+        disabled={disabled}
+        {...props}
+      >
+        {children}
+      </button>
+    );
+  }
+);

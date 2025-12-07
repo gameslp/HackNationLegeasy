@@ -14,6 +14,7 @@ import { getDiscussions, createDiscussion } from '../controllers/discussionsCont
 import { uploadFile, downloadFile, deleteFile, importFileFromLink } from '../controllers/filesController';
 import { validate } from '../middleware/validate';
 import { upload } from '../middleware/upload';
+import { validateDiscussionContent } from '../middleware/contentModeration';
 import {
   CreateStageRequestSchema,
   UpdateStageRequestSchema,
@@ -54,6 +55,7 @@ router.get('/:stageId/discussions', getDiscussions);
 router.post(
   '/:stageId/discussions',
   validate(CreateDiscussionRequestSchema, 'body'),
+  validateDiscussionContent, // Minor protection - filter personal data
   createDiscussion
 );
 

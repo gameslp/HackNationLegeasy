@@ -15,6 +15,11 @@ export interface Law {
   description: string;
   startDate: string;
   publishDate: string | null;
+  // Sejm API import fields
+  term: number | null;
+  processNumber: string | null;
+  eli: string | null;
+  passed: boolean | null;
   createdAt: string;
   updatedAt: string;
   currentPhase?: PhaseType | null;
