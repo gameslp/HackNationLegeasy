@@ -266,7 +266,7 @@ const tools: ChatCompletionTool[] = [
     type: 'function',
     function: {
       name: 'navigateTo',
-      description: 'Zaproponuj użytkownikowi przejście do konkretnej strony w aplikacji. Użyj gdy użytkownik pyta o plik ustawy, chce zobaczyć szczegóły etapu, ustawy, pomysłu lub fazy. ZAWSZE używaj tego narzędzia zamiast pokazywać tekst pliku - zaproponuj przejście na stronę gdzie użytkownik zobaczy pełne informacje. Wywołanie tego narzędzia wyświetli użytkownikowi przycisk do potwierdzenia nawigacji.',
+      description: 'Zaproponuj użytkownikowi przejście do konkretnej strony w aplikacji. KRYTYCZNE: Użyj tego narzędzia TYLKO po wcześniejszym wywołaniu searchLaws, getLawById, getLawStages lub searchIdeas - musisz mieć PRAWDZIWE ID z bazy danych! NIGDY nie wymyślaj ID - ID w systemie to losowe ciągi jak "cm2abc123xyz". Wywołanie wyświetli użytkownikowi przycisk nawigacji.',
       parameters: {
         type: 'object',
         properties: {
@@ -277,15 +277,15 @@ const tools: ChatCompletionTool[] = [
           },
           targetId: {
             type: 'string',
-            description: 'ID zasobu (lawId, phaseId, stageId lub ideaId)',
+            description: 'PRAWDZIWE ID z bazy danych (z searchLaws, getLawById, getLawStages lub searchIdeas). NIGDY nie wymyślaj!',
           },
           lawId: {
             type: 'string',
-            description: 'ID ustawy (wymagane dla phase i stage)',
+            description: 'PRAWDZIWE ID ustawy z bazy (wymagane dla phase i stage)',
           },
           phaseId: {
             type: 'string',
-            description: 'ID fazy (wymagane dla stage)',
+            description: 'PRAWDZIWE ID fazy z bazy (wymagane dla stage)',
           },
           title: {
             type: 'string',
@@ -769,9 +769,17 @@ ZASADY:
 5. Jeśli nie znasz odpowiedzi, powiedz o tym szczerze
 6. Gdy użytkownik pyta o konkretną ustawę, użyj narzędzi do wyszukania informacji
 7. Formatuj odpowiedzi czytelnie, używaj list i pogrubień gdy to pomoże
-8. WAŻNE: Gdy użytkownik pyta o plik ustawy, tekst ustawy lub chce zobaczyć szczegóły - ZAWSZE użyj narzędzia navigateTo zamiast pokazywać tekst. Zaproponuj przejście na odpowiednią stronę gdzie znajdzie pełne informacje.
-9. NIE pokazuj długich tekstów ustaw w chacie - zamiast tego użyj narzędzia navigateTo aby zaproponować nawigację do strony etapu
-10. Formatuj odpowiedzi w markdown, z tabulacją, punktami dla lepszej czytelności
+8. Formatuj odpowiedzi w markdown, z tabulacją, punktami dla lepszej czytelności
+
+KRYTYCZNE ZASADY NAWIGACJI:
+9. NIGDY nie wymyślaj ID ustaw, faz ani etapów! ID w systemie to losowe ciągi znaków (np. "cm2abc123xyz").
+10. ZAWSZE NAJPIERW użyj searchLaws lub searchIdeas aby znaleźć prawdziwe ID z bazy danych.
+11. Dopiero PO otrzymaniu wyników wyszukiwania z prawdziwymi ID, możesz użyć navigateTo.
+12. Gdy użytkownik chce przejść do ustawy/etapu:
+    a) NAJPIERW wywołaj searchLaws lub getLawStages aby pobrać prawdziwe ID
+    b) POTEM użyj navigateTo z ID otrzymanym z poprzedniego wywołania
+13. Jeśli wyszukiwanie nie zwróci wyników, poinformuj użytkownika że nie znaleziono takiej ustawy.
+14. NIE pokazuj długich tekstów ustaw w chacie - użyj navigateTo aby zaproponować nawigację.
 
 Pamiętaj: Twoim celem jest edukacja obywateli i zwiększenie transparentności procesu legislacyjnego.`;
 
@@ -795,7 +803,7 @@ export async function processChat(
     iterations++;
 
     const response = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: openaiMessages,
       tools,
       tool_choice: 'auto',

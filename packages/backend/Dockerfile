@@ -25,6 +25,9 @@ COPY packages/backend ./packages/backend
 # Generate Prisma client
 RUN pnpm --filter @repo/database generate
 
+# Build validation package
+RUN pnpm --filter @repo/validation build
+
 # Build backend
 RUN pnpm --filter @repo/backend build
 
@@ -44,16 +47,24 @@ COPY packages/database/package.json ./packages/database/
 COPY packages/validation/package.json ./packages/validation/
 COPY packages/backend/package.json ./packages/backend/
 
-# Install production dependencies only
+# Install production dependencies
 RUN pnpm install --frozen-lockfile --prod
 
-# Copy Prisma schema and generate client
-COPY packages/database/prisma ./packages/database/prisma
-COPY packages/database/src ./packages/database/src
-RUN pnpm --filter @repo/database generate
+# Install prisma CLI for migrations (v6 to match @prisma/client)
+RUN npm install -g prisma@6
 
-# Copy validation source
-COPY packages/validation/src ./packages/validation/src
+# Copy Prisma schema
+COPY packages/database/prisma ./packages/database/prisma
+
+# Copy generated Prisma client from builder
+COPY --from=builder /app/node_modules/.pnpm/@prisma+client@*/node_modules/@prisma/client ./node_modules/@prisma/client
+COPY --from=builder /app/node_modules/.pnpm/@prisma+client@*/node_modules/.prisma ./node_modules/.prisma
+
+# Copy database source for re-exports
+COPY packages/database/src ./packages/database/src
+
+# Copy built validation package
+COPY --from=builder /app/packages/validation/dist ./packages/validation/dist
 
 # Copy built backend
 COPY --from=builder /app/packages/backend/dist ./packages/backend/dist

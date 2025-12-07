@@ -37,11 +37,13 @@ services:
       DATABASE_URL: mysql://appuser:apppassword@mysql:3306/legeasy
       SHADOW_DATABASE_URL: mysql://appuser:apppassword@mysql:3306/shadow_db
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
     volumes:
       - uploads_data:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
+    command: sh -c "npx prisma migrate deploy --schema=/app/packages/database/prisma/schema.prisma && node dist/index.js"
     networks:
       - legeasy_network
 
@@ -50,14 +52,14 @@ services:
       context: .
       dockerfile: packages/frontend/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:3040/api
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3040/api}
     container_name: legeasy_frontend
     restart: always
     ports:
       - "3041:3000"
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: http://localhost:3040/api
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3040/api}
     depends_on:
       - backend
     networks:
