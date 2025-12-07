@@ -39,7 +39,7 @@ export default function RootLayout({
                   </div>
                   <div className="flex items-center gap-2">
                     <Link
-                      href="/"
+                      href="/#ustawy"
                       className="text-gray-700 hover:text-primary-700 hover:bg-primary-50 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
                     >
                       Ustawy

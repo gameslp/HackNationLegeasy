@@ -40,6 +40,9 @@ importers:
       pdf-parse:
         specifier: ^2.4.5
         version: 2.4.5
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
       '@types/cors':
         specifier: ^2.8.17
