@@ -37,21 +37,23 @@ export default function LawPage({
   }
 
   return (
-    <div>
+    <div className="space-y-8">
       {/* Back button */}
       <Link
         href="/"
-        className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6"
+        className="inline-flex items-center text-gray-600 hover:text-primary-700 transition-colors group mb-6"
       >
-        <ArrowLeft className="w-4 h-4 mr-2" />
+        <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
         Wróć do listy ustaw
       </Link>
 
       {/* Law info */}
-      <Card className="mb-8">
-        <CardContent className="py-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">{law.name}</h1>
-          <p className="text-gray-600 mb-4">{law.description}</p>
+      <div className="relative">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-100/30 rounded-full blur-3xl -z-10" />
+        <Card className="mb-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <CardContent className="py-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text">{law.name}</h1>
+            <p className="text-gray-600 mb-6 leading-relaxed">{law.description}</p>
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
             <span className="flex items-center">
               <User className="w-4 h-4 mr-1" />
@@ -68,7 +70,7 @@ export default function LawPage({
               </span>
             )}
           </div>
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="mt-6 pt-6 border-t border-gray-200 flex flex-wrap gap-3">
             <Link href={`/laws/${lawId}/impact`}>
               <Button variant="primary">
                 <Radar className="w-4 h-4 mr-2" />
@@ -76,20 +78,24 @@ export default function LawPage({
               </Button>
             </Link>
             <Link href={`/laws/${lawId}/diff`}>
-              <Button variant="secondary">
-                <GitCompare className="w-4 h-4 mr-2" />
+              <Button variant="secondary" className="group">
+                <GitCompare className="w-4 h-4 mr-2 group-hover:rotate-180 transition-transform duration-500" />
                 Porównaj wersje
               </Button>
             </Link>
           </div>
         </CardContent>
       </Card>
+      </div>
 
       {/* Phase timeline */}
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
-        Przebieg procesu legislacyjnego
-      </h2>
-      <PhaseTimeline phases={law.phases} lawId={lawId} />
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+          <span className="w-1 h-8 bg-gradient-to-b from-primary-600 to-primary-400 rounded-full mr-3"></span>
+          Przebieg procesu legislacyjnego
+        </h2>
+        <PhaseTimeline phases={law.phases} lawId={lawId} />
+      </div>
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
   useDeleteFile,
   useUploadLawPdf,
   useDeleteLawPdf,
+  useImportFileFromLink,
 } from '@/features/laws/hooks/useLaws';
 import {
   useAdminStageImpact,
@@ -24,6 +25,8 @@ import { ArrowLeft, Save, Upload, Trash2, FileText, Plus, X, FileUp, Download, R
 import { ImpactRadarChart, OverallScoreDisplay, ScoreBadge } from '@/components/ui/ImpactRadarChart';
 import Link from 'next/link';
 import { FILE_TYPE_LABELS } from '@/lib/api/types';
+import { fetchPhaseName } from '@/lib/utils/phaseName';
+import { fetchLinksFromHtml } from '@/lib/utils/getLinks';
 
 export default function AdminStagePage({
   params,
@@ -39,6 +42,7 @@ export default function AdminStagePage({
   const deleteFile = useDeleteFile();
   const uploadLawPdf = useUploadLawPdf();
   const deleteLawPdf = useDeleteLawPdf();
+  const importFileFromLink = useImportFileFromLink();
 
   // Impact Analysis hooks
   const { data: impactData, isLoading: impactLoading } = useAdminStageImpact(stageId);
@@ -57,6 +61,10 @@ export default function AdminStagePage({
   });
 
   const [newLink, setNewLink] = useState('');
+  const [scannedLinks, setScannedLinks] = useState<{ url: string; name: string }[]>([]);
+  const [scanningLink, setScanningLink] = useState<string | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [importingLink, setImportingLink] = useState<string | null>(null);
 
   useEffect(() => {
     if (stage) {
@@ -107,6 +115,45 @@ export default function AdminStagePage({
       ...formData,
       governmentLinks: formData.governmentLinks.filter((l) => l !== link),
     });
+  };
+
+  const handleScanFiles = async (link: string) => {
+    try {
+      setScanningLink(link);
+      setScanError(null);
+      const phaseName = await fetchPhaseName(phaseId);
+      const { links } = await fetchLinksFromHtml(
+        phaseName.name,
+        link,
+        stage?.name
+      );
+      setScannedLinks(links || []);
+    } catch (error) {
+      console.error(error);
+      setScanError('Nie udało się zeskanować linku.');
+      setScannedLinks([]);
+    } finally {
+      setScanningLink(null);
+    }
+  };
+
+  const handleImportScannedLink = async (fileUrl: string) => {
+    try {
+      setImportingLink(fileUrl);
+      await importFileFromLink.mutateAsync({
+        lawId,
+        phaseId,
+        stageId,
+        url: fileUrl,
+        name: scannedLinks.find((l) => l.url === fileUrl)?.name,
+        stageName: stage?.name,
+      });
+    } catch (error) {
+      console.error(error);
+      alert('Nie udało się dodać pliku z linku.');
+    } finally {
+      setImportingLink(null);
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -253,6 +300,15 @@ export default function AdminStagePage({
                       >
                         {link}
                       </a>
+                      <div className='flex flex-center'>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className='text-primary-600'
+                        onClick={() => handleScanFiles(link)}
+                      >
+                        Skanuj dokumenty
+                      </Button>
                       <button
                         type="button"
                         onClick={() => handleRemoveLink(link)}
@@ -260,10 +316,49 @@ export default function AdminStagePage({
                       >
                         <X className="w-4 h-4" />
                       </button>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
+              <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold text-gray-700">Zeskanowane pliki</p>
+                  {scanningLink && <span className="text-xs text-gray-500">Skanowanie...</span>}
+                </div>
+                {scanError && <p className="text-sm text-red-600 mb-2">{scanError}</p>}
+                {scannedLinks.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    Zeskanuj link, aby zobaczyć znalezione pliki do dodania.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {scannedLinks.map((linkObj) => (
+                      <div
+                        key={linkObj.url}
+                        className="flex items-center justify-between bg-white rounded-md px-3 py-2 border border-gray-200"
+                      >
+                        <a
+                          href={linkObj.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary-700 hover:underline truncate mr-2"
+                        >
+                          {linkObj.name || linkObj.url}
+                        </a>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleImportScannedLink(linkObj.url)}
+                          disabled={importingLink === linkObj.url}
+                        >
+                          {importingLink === linkObj.url ? 'Dodawanie...' : 'Dodaj do plików'}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex justify-end">

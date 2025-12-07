@@ -78,6 +78,33 @@ export interface StageDetail extends Stage {
   discussions: Discussion[];
 }
 
+export interface PhaseNameResult {
+  id: string;
+  type: PhaseType;
+  name: string;
+  lawId: string;
+  lawName: string;
+}
+
+export interface PhaseListItem extends Phase {
+  law: Pick<Law, 'id' | 'name' | 'author'>;
+  _count: {
+    stages: number;
+  };
+}
+
+export interface StageListItem extends Stage {
+  phase: {
+    id: string;
+    type: PhaseType;
+    law: Pick<Law, 'id' | 'name'>;
+  };
+  _count: {
+    files: number;
+    discussions: number;
+  };
+}
+
 export interface DiffResult {
   sourceStage: Stage;
   targetStage: Stage;

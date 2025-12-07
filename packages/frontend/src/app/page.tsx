@@ -2,13 +2,16 @@
 
 import { useState } from 'react';
 import { useLaws } from '@/features/laws/hooks/useLaws';
+import { useRecentStage } from '@/features/admin/hooks/useAdmin';
 import { LawCard } from '@/features/laws/components/LawCard';
 import { Input, Select } from '@/components/ui/Input';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Search, Filter, Scale, FileText, Users, ArrowRight } from 'lucide-react';
+import { PhaseBadge } from '@/components/ui/Badge';
+import { Search, Filter, Scale, FileText, Users, ArrowRight, Clock, Calendar, User, MessageSquare } from 'lucide-react';
 import { PHASE_LABELS } from '@/lib/api/types';
 import Link from 'next/link';
+import { BlurText } from '@/components/ui/BlurText';
 
 const phaseOptions = [
   { value: '', label: 'Wszystkie fazy' },
@@ -22,17 +25,19 @@ export default function HomePage() {
   const [search, setSearch] = useState('');
   const [phaseFilter, setPhaseFilter] = useState('');
   const { data, isLoading, error } = useLaws(search, phaseFilter);
+  const { data: recentStageData } = useRecentStage();
 
   return (
     <div className="space-y-12">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 shadow-2xl">
-        {/* Background decorations */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-black/10 rounded-full blur-3xl transform -translate-x-1/3 translate-y-1/3" />
-          {/* Polish flag stripe effect */}
-          <div className="absolute top-0 left-0 right-0 h-2 bg-white/90" />
+      <div className="relative overflow-hidden rounded-3xl shadow-2xl">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-primary-600 via-40% to-primary-800 animate-gradient"></div>
+        {/* Decorative blurs on top of gradient */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3" />
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary-900/30 rounded-full blur-3xl transform -translate-x-1/3 translate-y-1/3" />
+          <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-white/10 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2" />
         </div>
 
         {/* Content */}
@@ -45,12 +50,10 @@ export default function HomePage() {
                 Transparentny proces legislacyjny
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
-                Śledź ustawy
-                <br />
-                <span className="text-red-100">na każdym etapie</span>
-              </h1>
-
+              <div className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
+                <BlurText text='Śledź ustawy' />
+                <BlurText className="text-red-100" text="na każdym etapie" />
+              </div>
               <p className="text-lg sm:text-xl text-red-100/90 max-w-lg">
                 Przeglądaj projekty ustaw, porównuj zmiany między wersjami i zrozum proces legislacyjny dzięki analizie AI.
               </p>
@@ -116,36 +119,140 @@ export default function HomePage() {
 
       {/* Features Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mb-4">
-            <FileText className="w-6 h-6 text-primary-600" />
+        <div className="group relative bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-lg border border-gray-200/60 hover:shadow-2xl hover:border-primary-200 hover:-translate-y-2 transition-all duration-500">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary-100/30 rounded-full blur-3xl -z-10 group-hover:bg-primary-200/50 transition-colors duration-500" />
+          <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+            <FileText className="w-7 h-7 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Pełna historia zmian</h3>
-          <p className="text-gray-600 text-sm">
+          <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary-700 transition-colors">Pełna historia zmian</h3>
+          <p className="text-gray-600 leading-relaxed">
             Śledź każdą zmianę w projekcie ustawy od początku do końca procesu legislacyjnego.
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mb-4">
-            <Scale className="w-6 h-6 text-primary-600" />
+        <div className="group relative bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-lg border border-gray-200/60 hover:shadow-2xl hover:border-primary-200 hover:-translate-y-2 transition-all duration-500">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary-100/30 rounded-full blur-3xl -z-10 group-hover:bg-primary-200/50 transition-colors duration-500" />
+          <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+            <Scale className="w-7 h-7 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Porównanie wersji</h3>
-          <p className="text-gray-600 text-sm">
+          <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary-700 transition-colors">Porównanie wersji</h3>
+          <p className="text-gray-600 leading-relaxed">
             Porównuj różne wersje dokumentów i zobacz dokładnie co się zmieniło.
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mb-4">
-            <Users className="w-6 h-6 text-primary-600" />
+        <div className="group relative bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-lg border border-gray-200/60 hover:shadow-2xl hover:border-primary-200 hover:-translate-y-2 transition-all duration-500">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary-100/30 rounded-full blur-3xl -z-10 group-hover:bg-primary-200/50 transition-colors duration-500" />
+          <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+            <Users className="w-7 h-7 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Analiza AI</h3>
-          <p className="text-gray-600 text-sm">
+          <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary-700 transition-colors">Analiza AI</h3>
+          <p className="text-gray-600 leading-relaxed">
             Zrozum zmiany w ustawach dzięki wyjaśnieniom napisanym prostym językiem.
           </p>
         </div>
       </div>
+
+      {/* Recent Stage Section */}
+      {recentStageData?.data && (
+        <div className="relative">
+          <div className="absolute -top-20 left-0 w-96 h-96 bg-gradient-to-br from-primary-100/30 to-primary-200/20 rounded-full blur-3xl -z-10" />
+          <div className="bg-gradient-to-br from-white via-primary-50/30 to-white rounded-3xl p-8 shadow-xl border border-primary-200/60">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Clock className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Najnowszy etap</h2>
+                  <p className="text-sm text-gray-600">Ostatnio dodany do systemu</p>
+                </div>
+              </div>
+              <Link
+                href={`/laws/${recentStageData.data.phase.lawId}/phases/${recentStageData.data.phaseId}/stages/${recentStageData.data.id}`}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold px-6 py-3 rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+              >
+                Zobacz szczegóły
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left - Stage info */}
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <PhaseBadge phase={recentStageData.data.phase.type} />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-1">{recentStageData.data.name}</h3>
+                  <p className="text-sm text-gray-600 mb-2">{recentStageData.data.phase.law.name}</p>
+                  {recentStageData.data.description && (
+                    <p className="text-gray-700 leading-relaxed">{recentStageData.data.description}</p>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-4 text-sm">
+                  <div className="flex items-center gap-2 bg-white/80 px-4 py-2 rounded-lg">
+                    <Calendar className="w-4 h-4 text-primary-600" />
+                    <span className="text-gray-700">{new Date(recentStageData.data.date).toLocaleDateString('pl-PL')}</span>
+                  </div>
+                  {recentStageData.data.author && (
+                    <div className="flex items-center gap-2 bg-white/80 px-4 py-2 rounded-lg">
+                      <User className="w-4 h-4 text-primary-600" />
+                      <span className="text-gray-700">{recentStageData.data.author}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right - Stats */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-gray-200/60">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-gray-900">{recentStageData.data.files?.length || 0}</div>
+                      <div className="text-xs text-gray-600">Plików</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-gray-200/60">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                      <MessageSquare className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-gray-900">{recentStageData.data.discussions?.length || 0}</div>
+                      <div className="text-xs text-gray-600">Komentarzy</div>
+                    </div>
+                  </div>
+                </div>
+
+                {recentStageData.data.lawPdfPath && (
+                  <div className="col-span-2 bg-gradient-to-br from-green-50 to-emerald-50 backdrop-blur-sm rounded-2xl p-4 border border-green-200/60">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900">PDF ustawy dostępny</div>
+                        <div className="text-xs text-gray-600">
+                          {recentStageData.data.lawTextContent
+                            ? `${Math.round(recentStageData.data.lawTextContent.length / 1000)}k znaków`
+                            : 'Tekst wyekstrahowany'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Laws Section */}
       <div id="ustawy" className="scroll-mt-24">

@@ -5,6 +5,8 @@ import { sendSuccess } from '../middleware/response';
 import { AppError } from '../middleware/errorHandler';
 import fs from 'fs/promises';
 import path from 'path';
+import crypto from 'crypto';
+import type { ImportFileFromLinkRequest } from '@repo/validation';
 
 export const uploadFile = asyncHandler(async (req: Request, res: Response) => {
   const { stageId } = req.params;
@@ -27,6 +29,55 @@ export const uploadFile = asyncHandler(async (req: Request, res: Response) => {
   });
 
   sendSuccess(res, stageFile, 201);
+});
+
+export const importFileFromLink = asyncHandler(async (req: Request, res: Response) => {
+  const { stageId } = req.params;
+  const { url, fileType, name, stageName } = req.body as ImportFileFromLinkRequest;
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new AppError(
+      `Failed to fetch file from link (status ${response.status})`,
+      'EXTERNAL_FETCH_ERROR',
+      502
+    );
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  const contentType = response.headers.get('content-type') || 'application/octet-stream';
+
+  const resolvedName =
+    name?.trim() ||
+    parseContentDisposition(response.headers.get('content-disposition')) ||
+    decodeURIComponent(url.split('/').pop() || '') ||
+    'dokument';
+
+  const extFromName = path.extname(resolvedName);
+  const extFromContentType = mapContentTypeToExt(contentType);
+  const ext = extFromName || extFromContentType || '';
+
+  const uploadsDir = path.join(process.cwd(), '..', '..', 'uploads');
+  await fs.mkdir(uploadsDir, { recursive: true });
+
+  const uniqueName = `${Date.now()}-${crypto.randomUUID()}${ext}`;
+  const filePath = path.join(uploadsDir, uniqueName);
+
+  await fs.writeFile(filePath, buffer);
+
+  const stageFile = await prisma.stageFile.create({
+    data: {
+      stageId,
+      fileName: resolvedName || uniqueName,
+      filePath,
+      fileType: (fileType as FileType) || FileType.RELATED,
+      mimeType: contentType,
+      size: buffer.length,
+    },
+  });
+
+  sendSuccess(res, { stageFile, stageName: stageName || null }, 201);
 });
 
 export const downloadFile = asyncHandler(async (req: Request, res: Response) => {
@@ -74,3 +125,23 @@ export const deleteFile = asyncHandler(async (req: Request, res: Response) => {
 
   sendSuccess(res, { success: true });
 });
+
+function parseContentDisposition(header: string | null) {
+  if (!header) return null;
+  const match = /filename\*?=(?:UTF-8''|")?([^\";]+)/i.exec(header);
+  if (match && match[1]) {
+    return decodeURIComponent(match[1]);
+  }
+  return null;
+}
+
+function mapContentTypeToExt(contentType: string) {
+  const map: Record<string, string> = {
+    'application/pdf': '.pdf',
+    'application/msword': '.doc',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+      '.docx',
+    'text/plain': '.txt',
+  };
+  return map[contentType] || '';
+}

@@ -77,6 +77,13 @@ export const UploadFileRequestSchema = z.object({
   fileType: FileTypeSchema,
 });
 
+export const ImportFileFromLinkRequestSchema = z.object({
+  url: z.string().url(),
+  fileType: FileTypeSchema.default('RELATED'),
+  name: z.string().max(500).optional(),
+  stageName: z.string().max(500).optional(),
+});
+
 // ============ DISCUSSIONS ============
 export const CreateDiscussionRequestSchema = z.object({
   nickname: z.string().min(1).max(100),
@@ -94,6 +101,18 @@ export const AnalyzeRequestSchema = z.object({
   fileId: z.string().nullable().optional(),
 });
 
+// ============ PARAMS ============
+export const PhaseIdParamsSchema = z.object({
+  phaseId: z.string().min(1),
+});
+
+// ============ UTILS ============
+export const ScanLinksRequestSchema = z.object({
+  link: z.string().url(),
+  phaseName: z.string().min(1),
+  stageName: z.string().min(1),
+});
+
 // ============ TYPES ============
 export type CreateLawRequest = z.infer<typeof CreateLawRequestSchema>;
 export type UpdateLawRequest = z.infer<typeof UpdateLawRequestSchema>;
@@ -106,9 +125,14 @@ export type CreateStageRequest = z.infer<typeof CreateStageRequestSchema>;
 export type UpdateStageRequest = z.infer<typeof UpdateStageRequestSchema>;
 
 export type UploadFileRequest = z.infer<typeof UploadFileRequestSchema>;
+export type ImportFileFromLinkRequest = z.infer<typeof ImportFileFromLinkRequestSchema>;
 
 export type CreateDiscussionRequest = z.infer<typeof CreateDiscussionRequestSchema>;
 
 export type DiffQuery = z.infer<typeof DiffQuerySchema>;
 
 export type AnalyzeRequest = z.infer<typeof AnalyzeRequestSchema>;
+
+export type PhaseIdParams = z.infer<typeof PhaseIdParamsSchema>;
+
+export type ScanLinksRequest = z.infer<typeof ScanLinksRequestSchema>;
