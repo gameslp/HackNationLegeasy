@@ -10,9 +10,5 @@
     "db:seed": "pnpm --filter @repo/database seed",
     "db:studio": "pnpm --filter @repo/database studio",
     "build": "pnpm -r build"
-  },
-  "dependencies": {
-    "cheerio": "^1.1.2",
-    "motion": "^12.23.25"
   }
 }

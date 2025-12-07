@@ -61,7 +61,7 @@ export default function HomePage() {
               <div className="flex flex-wrap gap-4 pt-4">
                 <a
                   href="#ustawy"
-                  className="inline-flex items-center gap-2 bg-white text-primary-700 font-semibold px-6 py-3 rounded-xl hover:bg-red-50 transition-colors shadow-lg hover:shadow-xl"
+                  className="inline-flex items-center gap-2 bg-white text-primary-700 font-semibold px-6 py-3 rounded-xl hover:bg-red-50 transition-colors shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary-200 focus:ring-offset-2"
                 >
                   Przeglądaj ustawy
                   <ArrowRight className="w-4 h-4" />
@@ -257,7 +257,7 @@ export default function HomePage() {
       {/* Laws Section */}
       <div id="ustawy" className="scroll-mt-24">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Projekty ustaw</h2>
+          <h2 className="text-2xl font-bold text-gray-900" id='ustawy'>Projekty ustaw</h2>
           {data?.total && (
             <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
               {data.total} {data.total === 1 ? 'ustawa' : data.total < 5 ? 'ustawy' : 'ustaw'}

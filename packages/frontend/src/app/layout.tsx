@@ -48,7 +48,7 @@ export default function RootLayout({
                   {/* Navigation */}
                   <div className="flex items-center gap-1">
                     <Link
-                      href="/"
+                      href="/#ustawy"
                       className="group flex items-center gap-2 text-gray-600 hover:text-primary-700 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-primary-50"
                     >
                       <Scale className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
