@@ -24,18 +24,13 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
   );
 
   // Content Security Policy - adjust based on your needs
+  // Note: For API backends, CSP is less critical since we're not serving HTML
+  // Keeping it minimal to avoid blocking legitimate API requests
   res.setHeader(
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Needed for React
-      "style-src 'self' 'unsafe-inline'", // Needed for inline styles
-      "img-src 'self' data: https:",
-      "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' https://api.openai.com https://legislacja.rcl.gov.pl https://www.sejm.gov.pl",
       "frame-ancestors 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
     ].join('; ')
   );
 
