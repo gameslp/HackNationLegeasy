@@ -47,10 +47,15 @@ COPY packages/backend/package.json ./packages/backend/
 # Install production dependencies only
 RUN pnpm install --frozen-lockfile --prod
 
-# Copy Prisma schema and generate client
+# Copy Prisma schema
 COPY packages/database/prisma ./packages/database/prisma
+
+# Copy generated Prisma client from builder
+COPY --from=builder /app/node_modules/.pnpm/@prisma+client@*/node_modules/@prisma/client ./node_modules/@prisma/client
+COPY --from=builder /app/node_modules/.pnpm/@prisma+client@*/node_modules/.prisma ./node_modules/.prisma
+
+# Copy database source for re-exports
 COPY packages/database/src ./packages/database/src
-RUN pnpm --filter @repo/database generate
 
 # Copy validation source
 COPY packages/validation/src ./packages/validation/src
