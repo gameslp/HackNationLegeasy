@@ -56,7 +56,10 @@ export const importFileFromLink = asyncHandler(async (req: Request, res: Respons
 
   const extFromName = path.extname(resolvedName);
   const extFromContentType = mapContentTypeToExt(contentType);
-  const ext = extFromName || extFromContentType || '';
+  const ext = extFromName || extFromContentType || '.pdf';
+  const finalFileName = extFromName
+    ? resolvedName
+    : `${resolvedName}${ext}`;
 
   const uploadsDir = path.join(process.cwd(), '..', '..', 'uploads');
   await fs.mkdir(uploadsDir, { recursive: true });
@@ -69,7 +72,7 @@ export const importFileFromLink = asyncHandler(async (req: Request, res: Respons
   const stageFile = await prisma.stageFile.create({
     data: {
       stageId,
-      fileName: resolvedName || uniqueName,
+      fileName: finalFileName || uniqueName,
       filePath,
       fileType: (fileType as FileType) || FileType.RELATED,
       mimeType: contentType,
