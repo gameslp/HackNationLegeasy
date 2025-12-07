@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Markdown from 'react-markdown';
 import { useLaw, usePhase } from '@/features/laws/hooks/useLaws';
 import { StageCard } from '@/features/laws/components/StageCard';
+import { StageGraph } from '@/features/laws/components/StageGraph';
 import { PhaseBadge } from '@/components/ui/Badge';
 import {
   IDEA_AREA_LABELS,
@@ -387,6 +388,17 @@ export default function PhasePage({
           <span className="w-1 h-8 bg-gradient-to-b from-primary-600 to-primary-400 rounded-full mr-3"></span>
           Etapy
         </h2>
+
+        {phase.stages.length > 0 && (
+          <div className="mb-6">
+            <StageGraph
+              lawId={lawId}
+              phaseId={phaseId}
+              phaseType={phase.type}
+              stages={phase.stages}
+            />
+          </div>
+        )}
 
         {phase.stages.length === 0 ? (
           <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200">

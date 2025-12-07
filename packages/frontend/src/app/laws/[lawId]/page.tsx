@@ -1,8 +1,9 @@
 'use client';
 
 import { use } from 'react';
-import { useLaw } from '@/features/laws/hooks/useLaws';
+import { useLaw, useAllStages } from '@/features/laws/hooks/useLaws';
 import { PhaseTimeline } from '@/features/laws/components/PhaseTimeline';
+import { StageProcessGraph } from '@/features/laws/components/StageProcessGraph';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Calendar, User, ArrowLeft, GitCompare, Radar } from 'lucide-react';
@@ -15,6 +16,7 @@ export default function LawPage({
 }) {
   const { lawId } = use(params);
   const { data: law, isLoading, error } = useLaw(lawId);
+  const { data: allStagesData, isLoading: loadingStages } = useAllStages(lawId);
 
   if (isLoading) {
     return (
@@ -86,6 +88,25 @@ export default function LawPage({
           </div>
         </CardContent>
       </Card>
+      </div>
+
+      {/* Graph of all stages */}
+      <div className="space-y-3">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
+          <span className="w-1 h-8 bg-gradient-to-b from-primary-600 to-primary-400 rounded-full mr-3"></span>
+          Mapa etapów w procesie
+        </h2>
+        {loadingStages ? (
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 text-sm text-gray-500 shadow-sm">
+            Ładowanie grafu etapów...
+          </div>
+        ) : allStagesData?.stages && allStagesData.stages.length > 0 ? (
+          <StageProcessGraph lawId={lawId} stages={allStagesData.stages} />
+        ) : (
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 text-sm text-gray-500 shadow-sm">
+            Brak etapów do wyświetlenia.
+          </div>
+        )}
       </div>
 
       {/* Phase timeline */}
