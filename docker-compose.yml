@@ -37,6 +37,7 @@ services:
       DATABASE_URL: mysql://appuser:apppassword@mysql:3306/legeasy
       SHADOW_DATABASE_URL: mysql://appuser:apppassword@mysql:3306/shadow_db
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
     volumes:
       - uploads_data:/app/uploads
     depends_on:
