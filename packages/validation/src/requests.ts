@@ -148,3 +148,11 @@ export type ScanLinksRequest = z.infer<typeof ScanLinksRequestSchema>;
 export type ScrapeRclStageRequest = z.infer<typeof ScrapeRclStageRequestSchema>;
 
 export type ScrapeRclProjectRequest = z.infer<typeof ScrapeRclProjectRequestSchema>;
+
+// ============ SEJM IMPORT ============
+export const ImportSejmProcessSchema = z.object({
+  term: z.number().int().positive().min(1).max(20),
+  processNumber: z.string().min(1).max(50),
+});
+
+export type ImportSejmProcessRequest = z.infer<typeof ImportSejmProcessSchema>;
