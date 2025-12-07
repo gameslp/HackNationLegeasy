@@ -42,6 +42,7 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    command: sh -c "npx prisma migrate deploy --schema=/app/packages/database/prisma/schema.prisma && node dist/index.js"
     networks:
       - legeasy_network
 

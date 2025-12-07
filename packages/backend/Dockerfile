@@ -47,8 +47,9 @@ COPY packages/database/package.json ./packages/database/
 COPY packages/validation/package.json ./packages/validation/
 COPY packages/backend/package.json ./packages/backend/
 
-# Install production dependencies only
+# Install production dependencies + prisma for migrations
 RUN pnpm install --frozen-lockfile --prod
+RUN pnpm add -g prisma
 
 # Copy Prisma schema
 COPY packages/database/prisma ./packages/database/prisma
