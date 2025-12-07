@@ -50,14 +50,14 @@ services:
       context: .
       dockerfile: packages/frontend/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:3040/api
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3040/api}
     container_name: legeasy_frontend
     restart: always
     ports:
       - "3041:3000"
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: http://localhost:3040/api
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3040/api}
     depends_on:
       - backend
     networks:

@@ -20,6 +20,10 @@ RUN pnpm install --frozen-lockfile
 COPY packages/validation ./packages/validation
 COPY packages/frontend ./packages/frontend
 
+# Set build-time environment variables
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
 # Build frontend
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter @repo/frontend build
@@ -35,10 +39,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy built assets
-COPY --from=builder /app/packages/frontend/public ./packages/frontend/public
+# Copy built standalone app
 COPY --from=builder --chown=nextjs:nodejs /app/packages/frontend/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/packages/frontend/.next/static ./packages/frontend/.next/static
+
+# Copy public folder if it exists (optional)
+# COPY --from=builder /app/packages/frontend/public ./packages/frontend/public
 
 USER nextjs
 
