@@ -50,8 +50,8 @@ COPY packages/backend/package.json ./packages/backend/
 # Install production dependencies
 RUN pnpm install --frozen-lockfile --prod
 
-# Install prisma CLI for migrations
-RUN npm install -g prisma
+# Install prisma CLI for migrations (v6 to match @prisma/client)
+RUN npm install -g prisma@6
 
 # Copy Prisma schema
 COPY packages/database/prisma ./packages/database/prisma
