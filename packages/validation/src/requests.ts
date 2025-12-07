@@ -113,6 +113,14 @@ export const ScanLinksRequestSchema = z.object({
   stageName: z.string().min(1),
 });
 
+export const ScrapeRclStageRequestSchema = z.object({
+  url: z.string().url(),
+});
+
+export const ScrapeRclProjectRequestSchema = z.object({
+  url: z.string().url(),
+});
+
 // ============ TYPES ============
 export type CreateLawRequest = z.infer<typeof CreateLawRequestSchema>;
 export type UpdateLawRequest = z.infer<typeof UpdateLawRequestSchema>;
@@ -136,3 +144,7 @@ export type AnalyzeRequest = z.infer<typeof AnalyzeRequestSchema>;
 export type PhaseIdParams = z.infer<typeof PhaseIdParamsSchema>;
 
 export type ScanLinksRequest = z.infer<typeof ScanLinksRequestSchema>;
+
+export type ScrapeRclStageRequest = z.infer<typeof ScrapeRclStageRequestSchema>;
+
+export type ScrapeRclProjectRequest = z.infer<typeof ScrapeRclProjectRequestSchema>;

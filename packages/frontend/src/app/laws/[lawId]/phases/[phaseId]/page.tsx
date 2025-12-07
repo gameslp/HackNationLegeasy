@@ -78,7 +78,7 @@ export default function PhasePage({
     let supportAgainst = 0;
     let avgImportance = 0;
 
-    if (totalSurveys > 0) {
+    if (totalSurveys > 0 && idea.surveyResponses) {
       const forVotes = idea.surveyResponses.filter((r: any) => r.support >= 3).length;
       supportFor = Math.round((forVotes / totalSurveys) * 100);
       supportAgainst = 100 - supportFor;
@@ -308,7 +308,9 @@ export default function PhasePage({
         )}
 
         {/* Timeline */}
-        {idea.timeline && idea.timeline.length > 0 && (
+        {idea.timeline && idea.timeline.length > 0 && (() => {
+          const timeline = idea.timeline!;
+          return (
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
@@ -321,11 +323,11 @@ export default function PhasePage({
               <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200" />
 
               <div className="space-y-6">
-                {idea.timeline.map((event: any, index: number) => (
+                {timeline.map((event: any, index: number) => (
                   <div key={event.id} className="relative flex gap-4">
                     <div
                       className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center ${
-                        index === idea.timeline.length - 1
+                        index === timeline.length - 1
                           ? 'bg-amber-500 text-white'
                           : 'bg-white border-2 border-gray-300 text-gray-500'
                       }`}
@@ -346,7 +348,8 @@ export default function PhasePage({
               </div>
             </div>
           </div>
-        )}
+          );
+        })()}
       </div>
     );
   }

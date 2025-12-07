@@ -412,7 +412,9 @@ export default function StagePage({
           )}
 
           {/* Timeline z pomysłu */}
-          {stage.idea.timeline && stage.idea.timeline.length > 0 && (
+          {stage.idea.timeline && stage.idea.timeline.length > 0 && (() => {
+            const timeline = stage.idea!.timeline!;
+            return (
             <Card>
               <CardHeader>
                 <div className="flex items-center space-x-2">
@@ -424,11 +426,11 @@ export default function StagePage({
                 <div className="relative">
                   <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200" />
                   <div className="space-y-4">
-                    {(stage.idea.timeline as Array<{ id: string; title: string; date: string; description?: string }>).map((event, index) => (
+                    {timeline.map((event, index) => (
                       <div key={event.id} className="relative flex gap-4">
                         <div
                           className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center ${
-                            index === stage.idea!.timeline.length - 1
+                            index === timeline.length - 1
                               ? 'bg-amber-500 text-white'
                               : 'bg-white border-2 border-gray-300 text-gray-500'
                           }`}
@@ -450,7 +452,8 @@ export default function StagePage({
                 </div>
               </CardContent>
             </Card>
-          )}
+            );
+          })()}
 
           {/* Link do oryginalnego pomysłu */}
           <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">

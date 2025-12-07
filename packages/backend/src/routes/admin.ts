@@ -6,6 +6,8 @@ import {
   getAllStages,
   getPhaseName,
   scanLinksForPhase,
+  scrapeRclStage,
+  scrapeRclProject,
 } from '../controllers/adminController';
 import {
   generateStageImpactAnalysis,
@@ -14,7 +16,7 @@ import {
   getAdminStageImpactAnalysis,
 } from '../controllers/impactController';
 import { validate } from '../middleware/validate';
-import { PhaseIdParamsSchema, ScanLinksRequestSchema } from '@repo/validation';
+import { PhaseIdParamsSchema, ScanLinksRequestSchema, ScrapeRclStageRequestSchema, ScrapeRclProjectRequestSchema } from '@repo/validation';
 
 const router = Router();
 
@@ -37,6 +39,16 @@ router.post(
   '/scan-links',
   validate(ScanLinksRequestSchema, 'body'),
   scanLinksForPhase
+);
+router.post(
+  '/scrape-rcl-stage',
+  validate(ScrapeRclStageRequestSchema, 'body'),
+  scrapeRclStage
+);
+router.post(
+  '/scrape-rcl-project',
+  validate(ScrapeRclProjectRequestSchema, 'body'),
+  scrapeRclProject
 );
 
 export default router;

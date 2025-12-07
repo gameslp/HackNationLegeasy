@@ -805,8 +805,6 @@ export async function processChat(
 
     const assistantMessage = response.choices[0]?.message;
 
-    console.log('Assistant message:', assistantMessage);
-
     if (!assistantMessage) {
       return 'Przepraszam, wystąpił błąd podczas przetwarzania zapytania.';
     }

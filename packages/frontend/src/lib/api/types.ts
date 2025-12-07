@@ -70,13 +70,35 @@ export interface LawWithPhases extends Law {
   phases: Phase[];
 }
 
+// Shared type for idea data embedded in phases/stages
+export interface EmbeddedIdea {
+  id: string;
+  title: string;
+  shortDescription: string;
+  ministry: string;
+  area: IdeaArea;
+  status: IdeaStatus;
+  publishDate: string;
+  problemDescription: string;
+  proposedSolutions: string[];
+  aiSummary: string | null;
+  aiSummaryPublic: boolean;
+  aiSummaryDate: string | null;
+  surveyResponses?: { id: string; support: number; importance: number }[];
+  opinions?: { id: string; respondentType: string }[];
+  attachments?: { id: string; fileName: string; fileType: string }[];
+  timeline?: { id: string; title: string; date: string; description?: string }[];
+}
+
 export interface PhaseWithStages extends Phase {
   stages: Stage[];
+  idea?: EmbeddedIdea | null;
 }
 
 export interface StageDetail extends Stage {
   files: StageFile[];
   discussions: Discussion[];
+  idea?: EmbeddedIdea | null;
 }
 
 export interface PhaseNameResult {
@@ -98,6 +120,7 @@ export interface StageListItem extends Stage {
   phase: {
     id: string;
     type: PhaseType;
+    lawId: string;
     law: Pick<Law, 'id' | 'name'>;
   };
   _count: {
@@ -429,3 +452,44 @@ export const UNCERTAINTY_LABELS: Record<string, string> = {
   średnia: 'Średnia',
   wysoka: 'Wysoka',
 };
+
+// ==========================================
+// RCL STAGE SCRAPING
+// ==========================================
+
+export interface RclScrapedFile {
+  url: string;
+  name: string;
+  author: string | null;
+  createdAt: string | null;
+}
+
+export interface RclScrapedDirectory {
+  id: string;
+  name: string;
+  lastModified: string | null;
+  url: string;
+}
+
+export interface RclScrapedStage {
+  stageId: string;
+  stageName: string;
+  lastModified: string | null;
+  directories: RclScrapedDirectory[];
+  files: RclScrapedFile[];
+}
+
+export interface RclProjectStage {
+  stageNumber: number;
+  stageName: string;
+  stageId: string | null;
+  isActive: boolean;
+  lastModified: string | null;
+  catalogUrl: string | null;
+}
+
+export interface RclScrapedProject {
+  projectId: string;
+  projectTitle: string;
+  stages: RclProjectStage[];
+}
